@@ -1,0 +1,28 @@
+FEMDL is a collection of MATLAB functions for the computation of
+coherent sets in time dependent velocity fields. 
+
+FEMDL is copyright by Oliver Junge and Gary Froyland
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3 of the License, or (at your
+option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <http://www.gnu.org/licenses/>
+
+Please note that although FEMDL is freely available, it is copyrighted
+by the authors and may not be sold or included in commercial products
+without a license.
+
+If you use FEMDL in any program or publication, please acknowledge
+its authors by adding a reference to: 
+
+G. Froyland and O. Junge. Robust FEM-based extraction of finite-time
+coherent sets using scattered, sparse, and incomplete trajectories.
+arXiv, 2017.
