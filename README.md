@@ -22,8 +22,9 @@ Then you are ready to construct the stiffness and mass matrix:
 ```Matlab
 D = sparse(n,n); 
 for k = 1:nt                                        
-    t{k} = delaunay(p{k});                          
-    [Dt,Mt] = assemble(p{k},t{k},pb,kron([1 0 1],ones(size(t{k},1),1)));
+    t{k} = delaunay(p{k}); 
+    C_inv = kron([1 0 1],ones(size(t{k},1),1));     % 2 x 2 identity matrix
+    [Dt,Mt] = assemble(p{k},t{k},pb,C_inv);
     D = D + Dt/nt;  M = M + Mt/nt; 
 end;
 ```
