@@ -37,7 +37,7 @@ figure(1); clf; plot(lam,'s','markerfacecolor','b');
 xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvectors
-figure(2), clf; plotev(t,p,pb,V(:,7),0); colorbar
+figure(2), clf; plotev(t,p,pb,-V(:,7),0); colorbar
 xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
 
 %% compute partition

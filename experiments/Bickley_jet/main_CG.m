@@ -12,8 +12,8 @@ t = delaunay(p);
 
 %% assembly
 deg = 1;                                        % degree of quadrature
-K = compute_K(p,t,CG,deg);
-[D,M] = assemble(p,t,pb,K);
+G = compute_G(p,t,CG,deg);
+[D,M] = assemble(p,t,pb,G);
 
 %% solve eigenproblem
 [V,L] = eigs(D+0.01*speye(size(D)),M,20,'SM'); 

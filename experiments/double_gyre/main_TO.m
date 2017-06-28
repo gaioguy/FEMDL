@@ -11,7 +11,8 @@ n = 25; x = linspace(0,1,n);
 [X,Y] = meshgrid(x,x); p = [X(:) Y(:)];
 %p = rand(n,2)*diag([1,1]); 
 pb = [1:n^2; 1:n^2]';
-t = delaunay(p); m = size(t,1);
+tri = delaunayTriangulation(p);
+t = tri.ConnectivityList; m = size(t,1);
 
 %% assembly and transfer operator approximation
 Phi = get_Phi(p,t,pb);              % Phis map elements to standard simplex

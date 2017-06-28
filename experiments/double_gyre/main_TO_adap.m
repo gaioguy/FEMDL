@@ -27,7 +27,7 @@ for k = 1:nt
     r = randperm(n,floor(pm*n))'; 
     tr = delaunay(p{k}(r,:)); 
     t = [r(tr(:,1)), r(tr(:,2)), r(tr(:,3))];
-    [Dt,Mt] = assemble_new(p{k},t,pb,ones(size(t,1),3));
+    [Dt,Mt] = assemble(p{k},t,pb,ones(size(t,1),3));
     D = D + Dt;  M = M + Mt; 
 end;
 
