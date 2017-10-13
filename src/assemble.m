@@ -12,17 +12,9 @@ function [D,M] = assemble(p,t,pb,G)
 %
 % (C) 2017 by O. Junge and G. Froyland, see COPYRIGHT 
 
-n = size(p,1); m = size(t,1);
+n = max(pb(:,2)); m = size(t,1);
 
-% gradients of shape functions
-v1 = p(t(:,3),:)-p(t(:,2),:);
-v2 = p(t(:,1),:)-p(t(:,3),:);
-v3 = p(t(:,2),:)-p(t(:,1),:);
-area = 0.5*(-v3(:,1).*v2(:,2) + v3(:,2).*v2(:,1));       % areas of triangles
-dphi(:,:,1) = [-v1(:,2)./(2*area), v1(:,1)./(2*area)];
-dphi(:,:,2) = [-v2(:,2)./(2*area), v2(:,1)./(2*area)];
-dphi(:,:,3) = [-v3(:,2)./(2*area), v3(:,1)./(2*area)];
-area = abs(area);
+[dphi,area] = gradbasis(p,t);
 
 % assembly
 D = sparse(n,n); M = sparse(n,n);

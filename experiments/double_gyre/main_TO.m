@@ -17,7 +17,8 @@ t = tri.ConnectivityList; m = size(t,1);
 %% assembly and transfer operator approximation
 Phi = get_Phi(p,t,pb);              % Phis map elements to standard simplex
 Alpha = get_alpha(tri,T1,Phi);      % alpha matrix approximates transfer op.
-[D,M] = assemble(p,t,pb,ones(m,3)); % stiffness and mass matrix
+CG = kron([1 0 0 1],ones(size(t,1),1));      % 2 x 2 identity matrix
+[D,M] = assemble(p,t,pb,CG);        % stiffness and mass matrix
 B = 0.5*(D + Alpha'*D*Alpha); 
 
 %% solve eigenproblem

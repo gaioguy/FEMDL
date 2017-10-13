@@ -1,4 +1,4 @@
-function plotev2(t,p,pb,v,mesh)
+function plotev(t,p,pb,v,mesh)
 
 w(pb(:,1)) = v(pb(:,2)); 
 w = w/norm(w,inf); 

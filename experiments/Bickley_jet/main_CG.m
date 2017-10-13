@@ -1,11 +1,11 @@
 addpath('../../src'); clear all
 
 %% flow map 
-t0 = 0; tf = 60*60*24*40; nt = 2;
+t0 = 0; tf = 60*60*24*40; nt = 10;
 CG = @(x) cg_tensor(@bickleyjet_vf,x,linspace(t0,tf,nt));
 
 %% triangulation
-nx = floor(100);  ny = nx/20*6;  n = nx*ny;
+nx = floor(200);  ny = nx/20*6;  n = nx*ny;
 [X,Y] = meshgrid(linspace(0,20,nx),linspace(-3,3,ny)); p = [X(:) Y(:)];
 pb = [1:n; [1:((nx-1)*ny), 1:ny]]';             % boundary periodic in x
 t = delaunay(p); 
@@ -16,7 +16,7 @@ G = compute_G(p,t,CG,deg);
 [D,M] = assemble(p,t,pb,G);
 
 %% solve eigenproblem
-[V,L] = eigs(D+0.01*speye(size(D)),M,20,'SM'); 
+[V,L] = eigs(D+1e-4*speye(size(D)),M,20,'SM'); 
 [lam,order] = sort(diag(L),'descend'); V = V(:,order);
 
 %% plot spectrum
@@ -24,7 +24,7 @@ figure(1); clf; plot(lam,'s','markerfacecolor','b'); axis tight
 xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvector
-figure(2), clf; plotev(t,p,pb,V(:,2),0); colorbar
+figure(2), clf; plotev(t,p,pb,V(:,8),0); colorbar
 xlabel('$x$'); ylabel('$y$'); 
 
 %% compute partition

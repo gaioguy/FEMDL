@@ -12,7 +12,7 @@ T = @(x) flow_map(v,x,linspace(t0,tf,nt));
 
 %%  triangulation
 xmin = -4; xmax = 6; ymin = -34; ymax = -28; 
-nx = 250; ny = 0.6*nx; n = nx*ny; 
+nx = 200; ny = 0.6*nx; n = nx*ny; 
 x1 = linspace(xmin,xmax,nx); y1 = linspace(ymin,ymax,ny);
 [X,Y] = meshgrid(x1,y1); p0 = [X(:) Y(:)];          % nodes
 pb = [1:n; 1:n]';                                   % no periodic boundary
@@ -32,8 +32,8 @@ for k = 1:nt
     tr = alphaTriangulation(tri); 
     t = [r(tr(:,1)), r(tr(:,2)), r(tr(:,3))];
     I = kron([1 0 1],ones(size(t,1),1));         % 2 x 2 identity matrix
-    [Dt,Mt] = assemble(p{k},t,pb,I);
-    D = D + Dt/nt; M = M + Mt/nt; 
+    [Dt,Mt{k}] = assemble(p{k},t,pb,I);
+    D = D + Dt/nt; M = M + Mt{k}/nt; 
 end
 
 %% Dirichlet boundary condition
@@ -45,7 +45,7 @@ S = sum(abs(D)); I = find(abs(S)>eps);
 D = D(I,I); M = M(I,I); pI = p{1}(I,:); pbI = [1:size(pI,1); 1:size(pI,1)]';
 
 %% solve eigenproblem
-[V,L] = eigs(D,M,20,'SM'); 
+tic; [V,L] = eigs(D,M,20,'SM'); toc
 [lam,order] = sort(diag(L),'descend'); V = V(:,order);
 
 %% plot spectrum
@@ -55,7 +55,7 @@ xlabel('$k$'); ylabel('$\lambda_k$')
 %% plot eigenvectors
 figure(2), clf, 
 tri = alphaShape(pI(:,1),pI(:,2),1); tI = alphaTriangulation(tri);
-plotev(tI,pI,pbI,V(:,7),0); 
+plotev(tI,pI,pbI,-V(:,2),0); 
 xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
 
 %% compute partition

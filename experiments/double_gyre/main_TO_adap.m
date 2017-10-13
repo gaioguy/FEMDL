@@ -2,18 +2,17 @@ addpath('../../src'); clear all
 
 %% flow map parameters
 vf = @(t,x) rotating_double_gyre_vf(t,x);
-t0 = 0; tf = 1; nt = 2; ts = linspace(t0,tf,nt); 
+t0 = 0; tf = 1; nt = 6; ts = linspace(t0,tf,nt); 
 T = @(x) flow_map(vf,x,ts);
-G = @(x) ones(size(x,1),3);
 
 %% data points
 n = 25*25; x = linspace(0,1,n);                            
-[X,Y] = meshgrid(x,x); p0 = [X(:) Y(:)];
-% p0 = rand(n,2); 
+[X,Y] = meshgrid(x,x); p{1} = [X(:) Y(:)];
+% p{1} = rand(n,2); 
 load p_Meiss
 % p1 = rand(20000,2)*diag([1, 0.5])+ones(20000,2)*diag([0 0.5]);
 % p2 = rand(200,2)*diag([1, 0.5]);
-% p0 = [p1; p2]; n = size(p0,1);
+% p{1} = [p1; p2]; n = size(p{1},1);
 pb = [1:n; 1:n]';
 
 %% time integration
@@ -27,8 +26,9 @@ for k = 1:nt
     r = randperm(n,floor(pm*n))'; 
     tr = delaunay(p{k}(r,:)); 
     t = [r(tr(:,1)), r(tr(:,2)), r(tr(:,3))];
-    [Dt,Mt] = assemble(p{k},t,pb,ones(size(t,1),3));
-    D = D + Dt;  M = M + Mt; 
+    CG = kron([1 0 1],ones(size(t,1),1));      % 2 x 2 identity matrix
+    [Dt,Mt{k}] = assemble_old(p{k},t,pb,CG);
+    D = D + Dt;  M = M + Mt{k}; 
 end;
 
 %% remove all zero rows and columns
@@ -41,12 +41,12 @@ D = D(I,I); M = M(I,I); pI = p{1}(I,:); pbI = [1:size(pI,1); 1:size(pI,1)]';
 [lam,order] = sort(diag(L),'descend'); V = V(:,order);
 
 %% plot spectrum
-figure(1); clf; plot(lam,'s','markerfacecolor','b'); axis tight
+figure(10); clf; plot(lam,'s','markerfacecolor','b','markersize',15); axis tight
 xlabel('$k$'); ylabel('$\lambda_k$');
 
 %% plot eigenvector
 figure(2), clf; tI = delaunayn(pI); 
-plotev(tI,pI,pbI,V(:,3),1); axis([0 1 0 1]); colorbar
+plotev(tI,pI,pbI,V(:,2),1); axis([0 1 0 1]); colorbar
 xlabel('$x$'); ylabel('$y$');
 
 %% compute partition

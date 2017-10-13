@@ -21,8 +21,8 @@ b = unique(freeBoundary(tri));                      % b = boundary nodes
 
 %% assembly 
 deg = 1;                                            % degree of quadrature
-G = compute_G(p,t,CG,deg); 
-[D,M] = assemble(p,t,pb,G);
+tic; G = compute_G(p,t,CG,deg); toc
+tic; [D,M] = assemble(p,t,pb,G); toc
 
 %% Dirichlet boundary condition
 D(b,:) = 0; D(:,b) = 0; M(b,:) = 0; M(:,b) = 0;
@@ -37,7 +37,7 @@ figure(1); clf; plot(lam,'s','markerfacecolor','b');
 xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvectors
-figure(2), clf; plotev(t,p,pb,-V(:,7),0); colorbar
+figure(2), clf; plotev(t,p,pb,V(:,2),0); colorbar
 xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
 
 %% compute partition

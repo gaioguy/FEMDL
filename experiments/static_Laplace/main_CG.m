@@ -1,6 +1,6 @@
 addpath('../../src'); clear all
 
-%% rotating double gyre map 
+%% identity map 
 t0 = 0; tf = 1; nt = 2;
 CG = @(x) cg_tensor(@identity_vf,x,linspace(t0,tf,nt));
 
