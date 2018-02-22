@@ -1,20 +1,21 @@
-addpath('../../src'); clear all
+addpath('../../src'); clear all; clc; colormap jet
 
 %% flow map 
-t0 = 0; tf = 60*60*24*40; nt = 2;  % number of time steps for Laplacian
-T = @(x) flow_map(@bickleyjet_vf,x,linspace(t0,tf,nt));
+t0 = 0; days = 60*60*24; tf = 40*days; nt = 2;  % number of time steps for Laplacian
+T = @(x) flow_map(@bickleyjet,x,linspace(t0,tf,nt));
 
 %% triangulation
 nx = floor(100);  ny = nx/20*6;  n = nx*ny;
 [xi,yi] = meshgrid(linspace(0,20.01,nx),linspace(-3,3,ny));
-p0 = [xi(:) yi(:)];  pb = [1:n; 1:n]';
+p0 = [xi(:) yi(:)];  
+pb = [1:n; 1:n]';
 
 %% time integration
-P = T(p0);
+tic; P = T(p0); toc
 for k = 1:nt, p{k} = [mod(P(:,k),20) P(:,k+nt)]; end;
 
 %% assembly
-pm = 1;                               % percentage of nodes to remove
+pm = 1; tic                              % percentage of nodes to remove
 D = sparse(n,n); M = sparse(n,n);
 for k = 1:nt
     r = randperm(n,floor(pm*n))';
@@ -22,18 +23,18 @@ for k = 1:nt
     t = [r(tr(:,1)), r(tr(:,2)), r(tr(:,3))];
     [Dt,Mt] = assemble(p{k},t,pb,ones(size(t,1),3));
     D = D + Dt; M = M + Mt; 
-end
+end; toc
 
 %% remove all zero rows and columns
 S = sum(abs(D)); I = find(abs(S)>eps); 
 D = D(I,I); M = M(I,I); pI = p{1}(I,:); pbI = [1:size(pI,1); 1:size(pI,1)]';
 
 %% eigenproblem
-[V,L] = eigs(D+1e-8*speye(size(D,1)),M,20,'SM');  
-[lam,order] = sort(diag(L),'descend'); V = V(:,order); 
+tic; [V,L] = eigs(D,M,20,'SM');  toc
+[lam,ord] = sort(diag(L),'descend'); V = V(:,ord); 
 
 %% plot spectrum
-figure(1); clf; plot(lam,'s','markerfacecolor','b'); axis tight
+figure(1); clf; plot(lam,'*'); 
 xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvector

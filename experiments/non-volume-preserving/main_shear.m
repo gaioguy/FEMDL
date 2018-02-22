@@ -5,10 +5,10 @@ t0 = 0; tf = 1; nt = 2;
 T = @(x) [mod(x(:,1) + (cosh(2*x(:,2))-1)/2,4), x(:,2)];
 h = @(x) 1/8*(sin(pi*x(:,1))+2);
 
-%% flow map T2
-t0 = 0; tf = 1; nt = 2;  
-T = @(x) [mod(x(:,1) + x(:,2),4), x(:,2) + 0.1*sin(2*pi*x(:,2))];
-h = @(x) ones(size(x,1),1)/4;
+% %% flow map T2
+% t0 = 0; tf = 1; nt = 2;  
+% T = @(x) [mod(x(:,1) + x(:,2),4), x(:,2) + 0.1*sin(2*pi*x(:,2))];
+% h = @(x) ones(size(x,1),1)/4;
 
 %% periodic triangulation
 nx = 60;  ny = nx/4;  n = (nx-1)*ny; dx = 4/(nx-1); 
@@ -27,13 +27,13 @@ tic; D = sparse(n,n); M = sparse(n,n);
 a = quad_basis(p{1},t{1},pb{1},h);
 for k = 1:nt
     CG = kron([1 0 0 1],ones(size(t{k},1),1));      % 2 x 2 identity matrix
-    [Dt,Mt,lt{k}] = assemble_weighted(p{k},t{k},pb{k},CG,a);
-    D = D + Dt; M = M + Mt; 
+    [Dt{k},Mt{k},lt{k}] = assemble_weighted(p{k},t{k},pb{k},CG,a);
+    D = D + Dt{k}; M = M + Mt{k}; 
 end, toc
 
 %% eigenproblem
-tic; [V,L] = eigs(D,M,5,'SM'); toc
-[lam,order] = sort(diag(L),'descend'); V = V(:,order); 
+tic; [V,L] = eigs(D,Mt{1},5,'SM'); toc
+[lam,order] = sort(diag(L),'descend'); lam, V = V(:,order); 
 
 %% plot eigenvector
 figure(1), clf;  clear w

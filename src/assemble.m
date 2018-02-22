@@ -20,17 +20,17 @@ n = max(pb(:,2)); m = size(t,1);
 D = sparse(n,n); M = sparse(n,n);
 for i = 1:3
     for j = i:3
-        Aij = -area.*(dphi(:,1,i).*G(:,1).*dphi(:,1,j) ...
+        Dij = -area.*(dphi(:,1,i).*G(:,1).*dphi(:,1,j) ...
                     + dphi(:,1,i).*G(:,2).*dphi(:,2,j) ...
                     + dphi(:,2,i).*G(:,2).*dphi(:,1,j) ...
                     + dphi(:,2,i).*G(:,3).*dphi(:,2,j));
         Mij = area/12.*ones(size(dphi,1),1);
         I = pb(t(:,i),2); J = pb(t(:,j),2);
         if (j==i)
-            D = D + sparse(I,J,Aij,n,n);
+            D = D + sparse(I,J,Dij,n,n);
             M = M + sparse(I,J,Mij+area/12,n,n);
         else
-            D = D + sparse([I;J],[J;I],[Aij; Aij],n,n);   
+            D = D + sparse([I;J],[J;I],[Dij; Dij],n,n);   
             M = M + sparse([I;J],[J;I],[Mij; Mij],n,n);
         end        
     end

@@ -1,4 +1,4 @@
-function [D,M,ell] = assemble(p,t,pb,G,a)
+function [D,M,ell,w,area] = assemble(p,t,pb,G,a)
 
 %% ASSEMBLE stiffness and mass matrices
 %

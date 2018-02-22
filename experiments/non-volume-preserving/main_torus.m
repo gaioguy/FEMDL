@@ -1,7 +1,7 @@
 addpath('../../src'); clear all
 
 %% periodic triangulation
-nx = 50;  ny = nx;  n = (nx-1)*(ny-1); dx = 2*pi/(nx-1); dy = dx;
+nx = 40;  ny = nx;  n = (nx-1)*(ny-1); dx = 2*pi/(nx-1); dy = dx;
 [xi,yi] = meshgrid(linspace(0,2*pi-dx,nx-1),linspace(0,2*pi-dy,ny-1));
 p0{1} = [xi(:) yi(:)];  
 tic; [p{1},t{1},pb{1}] = delaunay_T2(p0{1},[0,2*pi,0,2*pi]); toc
@@ -23,8 +23,8 @@ end; toc
 tic; D = sparse(n,n); M = sparse(n,n); 
 a = quad_basis(p{1},t{1},pb{1},h);
 for k = 1:nt
-    CG = kron([1 0 0 1],ones(size(t{k},1),1));      % 2 x 2 identity matrix
-    [Dt{k},Mt{k},lt{k}] = assemble_weighted(p{k},t{k},pb{k},CG,a);
+    A = kron([1 0 0 1],ones(size(t{k},1),1));      % 2 x 2 identity matrix
+    [Dt{k},Mt{k},lt{k}] = assemble_weighted(p{k},t{k},pb{k},A,a);
     D = D + Dt{k}; M = M + Mt{k}; 
 end, toc
 
