@@ -11,20 +11,19 @@ T = @(x) flow_map(v,x,ts);
 ```
 Next generate a set of nodes and integrate them by the flow map. The matrix pb serves to define periodic boundaries (here, the boundary is non-periodic).
 ```Matlab
-n = 625; p0 = rand(n,2);                            
+n = 625; 
+p0 = rand(n,2);                            
 P = T(p0);  
-for k = 1:nt, 
-   p{k}=P(:,[k k+nt]);
-end; 
+for k = 1:nt, p{k} = P(:,[k k+nt]); end; 
 pb = [1:n; 1:n]';
 ```
 Then you are ready to construct the stiffness and mass matrix:
 ```Matlab
 D = sparse(n,n); 
+A = kron([1 0 1],ones(size(t{k},1),1));     % 2 x 2 identity matrix
 for k = 1:nt                                        
     t{k} = delaunay(p{k}); 
-    C_inv = kron([1 0 1],ones(size(t{k},1),1));     % 2 x 2 identity matrix
-    [Dt,Mt] = assemble(p{k},t{k},pb,C_inv);
+    [Dt,Mt] = assemble(p{k},t{k},pb,A);
     D = D + Dt/nt;  M = M + Mt/nt; 
 end;
 ```
@@ -41,11 +40,11 @@ idx = kmeans(W, size(V1,2));
 ```
 Finally, plot the spectrum
 ```Matlab
-plot(lam,'s','markerfacecolor','b'); 
+plot(lam,'*'); 
 ```
 some eigenvector
 ```Matlab
-plotev(t{1},p{1},pb,V(:,2),1); colorbar
+plotf(p{1},t{1},pb,V(:,2),1); colorbar
 ```
 and the partition
 ```Matlab
