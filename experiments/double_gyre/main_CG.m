@@ -1,4 +1,4 @@
-addpath('../../src'); clear all; clc; colormap jet
+addpath('../../src'); clear all; colormap jet
 
 %% rotating double gyre map 
 t0 = 0; tf = 1; nt = 2; tspan = linspace(t0,tf,nt);
@@ -7,7 +7,7 @@ CG = @(x) inv_CG(@double_gyre,x,tspan);
 %% triangulation
 n = 25; x = linspace(0,1,n);
 [X,Y] = meshgrid(x,x); p = [X(:) Y(:)];     % nodes
-p = rand(n^2,2);                           % for Fig. 3
+% p = rand(n^2,2);                           % for Fig. 3
 pb = [1:n^2; 1:n^2]';                       % nonperiodic boundary
 t = delaunay(p);                            % t is m by 3 matrix of triangles
 
@@ -21,7 +21,7 @@ tic; [V,L] = eigs(D,M,10,'SM'); toc
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
 %% plot spectrum
-figure(1); clf; plot(lam,'*'); 
+figure(1); plot(lam,'*'); axis tight, axis square
 xlabel('$k$'); ylabel('$\lambda_k$');
 
 %% plot eigenvector

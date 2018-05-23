@@ -30,7 +30,7 @@ tic, [V,L] = eigs(DL,M,10,'SM'); toc
 [lam,order] = sort(diag(L),'descend'); lam; V = V(:,order);
 
 %% plot spectrum
-figure(1); clf; plot(lam,'s','markerfacecolor','b'); axis tight
+figure(1); plot(lam,'*'); axis tight, axis square
 xlabel('$k$'); ylabel('$\lambda_k$');
 
 %% plot eigenvector

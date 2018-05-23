@@ -29,8 +29,12 @@ for k = 1:nt
 end, toc
 
 %% eigenproblem
-tic; [V,L] = eigs(D,M,3,'sm'); toc
+tic; [V,L] = eigs(D,M,10,'sm'); toc
 [lam,order] = sort(diag(L),'descend'); lam, V = V(:,order); 
+
+%% plot spectrum
+figure(1); clf; plot(lam,'*'); axis tight, axis square
+xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvector and its image
 figure(1), clf;  clear w; cl = [-0.8, -0.4, 0, 0.4, 0.8];
@@ -45,8 +49,21 @@ tricontour(t{2},p{2}(:,1),p{2}(:,2),-w,cl);axis equal; axis([0 2*pi 0 2*pi]);  b
 figure(3); clf; colormap summer; cmap = colormap; cmap = cmap(end:-1:1,:); colormap(cmap);
 plotf(p{1},t{1},pb{1},a./lt{1},0); axis equal; axis([0 2*pi 0 2*pi]); box on; 
 caxis([0.005 0.09]); colorbar
+
 %% ... and its image
 figure(4); clf; colormap summer; cmap = colormap; cmap = cmap(end:-1:1,:); colormap(cmap);
 plotf(p{2},t{2},pb{2},a./lt{2},0); axis equal; axis([0 2*pi 0 2*pi]); box on; colorbar
 caxis([0.005 0.09]); colorbar
+
+%% compute partition
+nx1 = 200; ny1 = nx1; 
+x1 = linspace(0,2*pi,nx1); y1 = linspace(0,2*pi,ny1);
+[X1,Y1] = meshgrid(x1,y1); 
+V1 = eval_p1(p0{1},V(:,1:3),[X1(:) Y1(:)]);       % evaluate eigenvectors on grid
+idx = kmeans(V1, 3,'Replicates',20);       % kmeans clustering
+
+%% plot partition
+figure(3); clf; surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
+axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); 
+
 

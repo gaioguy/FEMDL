@@ -15,7 +15,7 @@ function G = compute_G(p,t,CG,deg)
 % (C) 2017 by O. Junge and G. Froyland, see COPYRIGHT 
 
 m = size(t,1);
-[lam,w] = quadpts(deg); 
+[lam,w] = quadpts(deg);
 nq = size(lam,1);
 G = zeros(m,3);
 for k = 1:nq

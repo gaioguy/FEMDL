@@ -14,7 +14,7 @@ T = @(x) flow_map(vf,x,tspan);
 
 %%  nodes
 xmin = -4; xmax = 6; ymin = -34; ymax = -28; 
-nx = 200; ny = 0.6*nx; n = nx*ny; 
+nx = 100; ny = 0.6*nx; n = nx*ny; 
 x1 = linspace(xmin,xmax,nx); y1 = linspace(ymin,ymax,ny);
 [X,Y] = meshgrid(x1,y1); p0 = [X(:) Y(:)];          % nodes
 pb = [1:n; 1:n]';                                   % no periodic boundary
@@ -24,11 +24,11 @@ tri = alphaShape(p0(:,1),p0(:,2),1);
 b = unique(boundaryFacets(tri));                    % b = boundary nodes
 
 %% time integration
-P = T(p0);
+tic; P = T(p0); toc
 for k = 1:nt, p{k} = [P(:,k) P(:,k+nt)]; end;
 
 %% assembly (for missing data case)
-pm = 1;                                     % percentage of nodes to remove
+pm = 1; tic                                    % percentage of nodes to remove
 D = sparse(n,n); M = sparse(n,n); 
 for k = 1:nt
     r = randperm(n,floor(pm*n))'; 
@@ -39,6 +39,7 @@ for k = 1:nt
     [Dt,Mt{k}] = assemble(p{k},t,pb,I);
     D = D + Dt/nt; M = M + Mt{k}/nt; 
 end
+toc
 
 %% Dirichlet boundary condition
 D(b,:) = 0; D(:,b) = 0; M(b,:) = 0; M(:,b) = 0; 
@@ -53,24 +54,37 @@ tic; [V,L] = eigs(D,M,10,'SM'); toc
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
 %% plot spectrum
-figure(1); clf; plot(lam,'*');
+figure(1); clf; plot(lam,'*'); axis tight, axis square
 xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvectors
 figure(2), clf, 
 tri = alphaShape(pI(:,1),pI(:,2),1); 
 tI = alphaTriangulation(tri);
-plotf(pI,tI,pbI,V(:,1),0); 
+plotf(pI,tI,pbI,V(:,2),0); 
 xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
 
 %% compute partition
-nx1 = 200; ny1 = 0.6*nx1; 
+nx1 = 400; ny1 = 0.6*nx1; 
 x1 = linspace(xmin,xmax,nx1); y1 = linspace(ymin,ymax,ny1);
 [X1,Y1] = meshgrid(x1,y1); 
-V1 = eval_p1(pI,V(:,[1,2,3]),[X1(:) Y1(:)]);         % evaluate eigenvectors on grid
-idx = kmeans(V1, 4, 'Replicates', 10);           % kmeans clustering
+nc = 6;
+tic; V1 = eval_p1(pI,V(:,1:nc),[X1(:) Y1(:)]); toc        % evaluate eigenvectors on grid
+tic; idx = kmeans(V1, nc+1, 'Replicates', 10); toc          % kmeans clustering
 
 %% plot partition
 figure(3); clf; surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
-axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
+axis equal; axis tight; xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');  
+load cmap7; colormap(cmap); 
 
+%% advect abd plot LCS
+figure(4); clf; hold on; colormap(cmap); caxis([1 nc+1])
+T = @(x) flow_map(vf,x,tspan);
+for l = 2:nc+1
+    I = find(idx==l); 
+    S = [X1(I) Y1(I)];
+    TS = T(S); TS = TS(:,[2,4]);
+    scatter3(TS(:,1),TS(:,2),zeros(length(I),1),10,cmap(l,:),'filled'); 
+end
+view(2); axis([-8 2 -33 -27])
+xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');

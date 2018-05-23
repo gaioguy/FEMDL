@@ -34,7 +34,7 @@ z0(:,5)=zi+rho.z;
 z0(:,6)=zi-rho.z;
 
 %% time integration
-[xt,yt,zt] = integrator3(v,x0(:),y0(:),z0(:),tspan);
+[xt,yt,zt] = integrator_3d(v,x0(:),y0(:),z0(:),tspan);
 xt = reshape(xt,q, m, Nrad); % Number of time steps x number of pointsxdimension x 6
 yt = reshape(yt,q, m, Nrad);
 zt = reshape(zt,q, m, Nrad);

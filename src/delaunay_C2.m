@@ -1,11 +1,11 @@
-function [p1,t3,pb] = xperiodic_delaunay_2d(p, box)
+function [p1,t3,pb] = delaunay_C2(p, box)
 
 %% DELAUNAY_C2 construct Delaunay triangulation on cylinder
 %
 % [p1,t3,pb] = delaunay_C2(p, box) constructs a Delaunay
 % triangulation on the 2-dimensiona cylinder (i.e. periodic in x-direction)
 %   p: (n x 2), nodes of the triangulation, one node per row
-%   box: (1 x 4), specifies the domain (like in axis)
+%   box: (1 x 2), specifies the domain in x-direction
 %   p1: (n1 x 2), extended set of nodes
 %   t3: (m3 x 3), triangulation, each row def. one triangle by indexing
 %   into p1
