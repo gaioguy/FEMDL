@@ -1,4 +1,4 @@
-addpath('../../src'); clear all
+addpath('../../src/3d'); clear all
 
 %% ABC flow 
 t0 = 0; tf = 1; tspan = [t0,tf];
@@ -46,7 +46,7 @@ W(pb(:,1),:) = V(pb(:,2),:);
 V1 = eval_p1_3d(p1,p2,p3,W,[X1(:) Y1(:) Z1(:)]);      
 
 %% partition by kmeans clustering
-k = 5;
+k = 3;
 tic; idx = kmeans(V1(:,2:k),k,'Replicates',10); toc   
 
 %% plot coherent sets

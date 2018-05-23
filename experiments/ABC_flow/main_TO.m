@@ -1,4 +1,4 @@
-addpath('../../src'); clear all
+addpath('../../src/3d'); clear all
 
 %% ABC inverse flow map
 t0 = 0; tf = 1; tspan = [tf,t0]; 
@@ -52,7 +52,7 @@ W(pb(:,1),:) = V(pb(:,2),:);
 tic; V1 = eval_p1_3d(p1,p2,p3,W,[X1(:) Y1(:) Z1(:)]); toc      
 
 %% partition by kmeans clustering
-nc = 5;
+nc = 3;
 tic; idx = kmeans(V1(:,1:nc-1),nc,'Replicates',10); toc   
 
 %% plot coherent sets

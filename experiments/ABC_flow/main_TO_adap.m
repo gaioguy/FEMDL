@@ -1,4 +1,4 @@
-addpath('../../src'); clear all
+addpath('../../src/3d'); clear all
 
 %% ABC flow map
 tspan = [0,1]; nt = 2;
