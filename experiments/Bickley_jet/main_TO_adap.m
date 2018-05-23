@@ -15,7 +15,9 @@ tic; P = T(p0); toc
 for k = 1:nt, p{k} = [mod(P(:,k),20) P(:,k+nt)]; end;
 
 %% assembly
-pm = 0.2; tic                              % percentage of nodes to keep
+tic; 
+pm = 1;                               % percentage of nodes to keep
+% pm = 0.2;                               % percentage of nodes to keep
 D = sparse(n,n); M = sparse(n,n);
 for k = 1:nt
     r = randperm(n,floor(pm*n))';
@@ -51,7 +53,7 @@ V1 = eval_p1(pI,V(:,1:nc),[X1(:) Y1(:)]);       % evaluate eigenvectors on grid
 idx = kmeans(V1,nc,'Replicates',10);       % kmeans clustering
 
 %% plot partition
-figure(2); subplot(313); % clf; 
+figure(3); subplot(313); % clf; 
 surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat; colorbar
 axis equal; axis tight; ylabel('$y$'); xlabel('$x$');
 

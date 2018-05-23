@@ -14,7 +14,7 @@ T = @(x) flow_map(vf,x,tspan);
 
 %%  nodes
 xmin = -4; xmax = 6; ymin = -34; ymax = -28; 
-nx = 100; ny = 0.6*nx; n = nx*ny; 
+nx = 250; ny = 0.6*nx; n = nx*ny; 
 x1 = linspace(xmin,xmax,nx); y1 = linspace(ymin,ymax,ny);
 [X,Y] = meshgrid(x1,y1); p0 = [X(:) Y(:)];          % nodes
 pb = [1:n; 1:n]';                                   % no periodic boundary
@@ -68,9 +68,9 @@ xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');
 nx1 = 400; ny1 = 0.6*nx1; 
 x1 = linspace(xmin,xmax,nx1); y1 = linspace(ymin,ymax,ny1);
 [X1,Y1] = meshgrid(x1,y1); 
-nc = 6;
+nc = 3;
 tic; V1 = eval_p1(pI,V(:,1:nc),[X1(:) Y1(:)]); toc        % evaluate eigenvectors on grid
-tic; idx = kmeans(V1, nc+1, 'Replicates', 10); toc          % kmeans clustering
+tic; idx = kmeans(V1, nc+1, 'Replicates', 50); toc          % kmeans clustering
 
 %% plot partition
 figure(3); clf; surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat

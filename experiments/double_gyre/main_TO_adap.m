@@ -1,4 +1,4 @@
-addpath('../../src'); clear all; colormap jet
+addpath('../../src'); clear all; colormap jet; clc
 
 %% flow map
 t0 = 0; tf = 1; nt = 6; tspan = linspace(t0,tf,nt); 

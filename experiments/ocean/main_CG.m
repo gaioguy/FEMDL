@@ -51,14 +51,14 @@ xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');
 nx1 = 200; ny1 = 0.6*nx1; 
 x1 = linspace(xmin,xmax,nx1); y1 = linspace(ymin,ymax,ny1);
 [X1,Y1] = meshgrid(x1,y1); 
-nc = 6;
+nc = 3;
 tic; V1 = eval_p1(p,V(:,1:nc),[X1(:) Y1(:)]); toc    % evaluate eigenvectors on grid
-tic; idx = kmeans(V1, nc+1,'Replicates',20); toc       % kmeans clustering
+tic; idx = kmeans(V1,nc+1,'Replicates',50); toc       % kmeans clustering
 
 %% plot partition
 figure(3); clf; surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
 axis equal; axis tight; xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
-load cmap7; colormap(cmap); 
+load cmap7; colormap(cmap); colorbar
 
 %% advect abd plot LCS
 figure(4); clf; hold on; colormap(cmap); caxis([1 nc+1])

@@ -6,7 +6,7 @@ tspan = linspace(t0,tf,nt);
 CG = @(x) inv_CG(@bickleyjet,x,tspan);
 
 %% nodes
-nx = 25;  ny = nx/20*6;  n = nx*ny;
+nx = 100;  ny = floor(nx/20*6);  n = nx*ny;
 [X,Y] = meshgrid(linspace(0,20,nx),linspace(-3,3,ny)); 
 p = [X(:) Y(:)];
 pb = [1:n; [1:((nx-1)*ny), 1:ny]]';             % boundary periodic in x
@@ -20,7 +20,7 @@ tic; G = inv_CG_quad(p,t,CG,deg); toc
 tic; [D,M] = assemble(p,t,pb,G); toc
 
 %% solve eigenproblem
-tic; [V,L] = eigs(D,M,15,'SM'); toc
+tic; [V,L] = eigs(D+speye(size(D))*1e-8,M,15,'SM'); toc
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
 %% plot spectrum
@@ -39,7 +39,7 @@ V1 = eval_p1(p,V(pb(:,2),1:nc),[X1(:) Y1(:)]);       % evaluate eigenvectors on 
 idx = kmeans(V1, size(V1,2),'Replicates',10);       % kmeans clustering
 
 %% plot partition
-%figure(3); clf; 
+figure(3); clf; 
 surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
 axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
 
