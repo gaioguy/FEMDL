@@ -20,7 +20,7 @@ tic; pm = 0.2;
 D = sparse(n,n); M = sparse(n,n);
 for k = 1:nt
     r = randperm(n,floor(pm*n))';
-    tr = delaunay_C2(p{k}(r,:),[0,20]);
+    tr = delaunay_C2(p{k}(r,:),20);
     t = r(tr);
     I = kron([1 0 1],ones(size(t,1),1));
     [Dk, Mk] = assemble(p{k},t,pb,I);
@@ -46,11 +46,11 @@ plotf(pI,tI,pbI,normed(V(:,ev_no)),0); caxis([-1,1]); colorbar
 xlabel('$x$'); ylabel('$y$'); 
 
 %% compute partition
-nx1 = 400; ny1 = nx1/20*6; x1 = linspace(0,20,nx1); y1 = linspace(-3,3,ny1);
-[X1,Y1] = meshgrid(x1,y1); 
+nx1 = 400; ny1 = nx1/20*6; 
+[X1,Y1] = meshgrid(linspace(0,20,nx1),linspace(-3,3,ny1)); 
 nc = 8;  
 V1 = eval_p1(pI,V(:,1:nc),[X1(:) Y1(:)]);  % evaluate eigenvectors on grid
-idx = kmeans(V1,nc,'Replicates',20);       % kmeans clustering
+idx = kmeans(V1,nc,'Replicates',10);       % kmeans clustering
 
 %% plot partition
 figure(3); subplot(313);  clf; 
