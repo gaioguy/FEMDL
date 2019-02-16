@@ -9,7 +9,6 @@ dim = 2; % dimension of state space
 nx = 100;  ny = nx/20*6;  n = nx*ny;
 [xi,yi] = meshgrid(linspace(0,20.01,nx),linspace(-3,3,ny));
 p0 = [xi(:) yi(:)]; 
-pb = [1:n; 1:n]';
 
 %% time integration
 tic; P = T(p0); toc
@@ -19,12 +18,12 @@ for k = 1:nt, p{k} = [mod(P(:,k),20) P(:,k+nt)]; end;
 tic; pm = 0.2;                               
 D = sparse(n,n); M = sparse(n,n);
 for k = 1:nt
-    r = randperm(n,floor(pm*n))';
-    tr = delaunay_C2(p{k}(r,:),20);
-    t = r(tr);
-    I = kron([1 0 1],ones(size(t,1),1));
-    [Dk, Mk] = assemble(p{k},t,pb,I);
-    D = D + Dk; M = M + Mk; 
+    r = randperm(n,floor(pm*n))';                % draw random sample of nodes in p{k}
+    [pr,tr,pbr] = delaunay_C2_new(p{k}(r,:),20);
+    I = kron([1 0 1],ones(size(tr,1),1));
+    [Dr, Mr] = assemble(pr,tr,pbr,I);
+    [Ir,Jr,Sr] = find(Dr);  D = D + sparse(r(Ir),r(Jr),Sr,n,n);
+    [Ir,Jr,Sr] = find(Mr);  M = M + sparse(r(Ir),r(Jr),Sr,n,n);
 end; toc;
 
 %% remove all zero rows and columns
