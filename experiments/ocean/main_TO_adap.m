@@ -1,4 +1,4 @@
-addpath('../../src'); clear all; clc; colormap jet
+addpath('../../src','../../src/2d'); clear all; clc; colormap jet
 
 %% ocean vector field and flow map
 % The altimeter data are produced by SSALTO/DUACS and distributed by 
@@ -14,13 +14,14 @@ T = @(x) flow_map(vf,x,tspan);
 
 %%  nodes
 xmin = -4; xmax = 6; ymin = -34; ymax = -28; 
-nx = 250; ny = 0.6*nx; n = nx*ny; 
+nx = 150; ny = 0.6*nx; n = nx*ny; 
 x1 = linspace(xmin,xmax,nx); y1 = linspace(ymin,ymax,ny);
-[X,Y] = meshgrid(x1,y1); p0 = [X(:) Y(:)];          % nodes
+[X,Y] = meshgrid(x1,y1); 
+p0 = [X(:) Y(:)];          % nodes
 pb = [1:n; 1:n]';                                   % no periodic boundary
 
 %% triangulation
-tri = alphaShape(p0(:,1),p0(:,2),1);
+tri = alphaShape(p0(:,1),p0(:,2));
 b = unique(boundaryFacets(tri));                    % b = boundary nodes
 
 %% time integration
@@ -59,9 +60,9 @@ xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvectors
 figure(2), clf, 
-tri = alphaShape(pI(:,1),pI(:,2),1); 
+tri = alphaShape(pI(:,1),pI(:,2)); 
 tI = alphaTriangulation(tri);
-plotf(pI,tI,pbI,V(:,2),0); 
+plotf(pI,tI,pbI,V(:,1),0); 
 xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
 
 %% compute partition
@@ -70,7 +71,7 @@ x1 = linspace(xmin,xmax,nx1); y1 = linspace(ymin,ymax,ny1);
 [X1,Y1] = meshgrid(x1,y1); 
 nc = 3;
 tic; V1 = eval_p1(pI,V(:,1:nc),[X1(:) Y1(:)]); toc        % evaluate eigenvectors on grid
-tic; idx = kmeans(V1, nc+1, 'Replicates', 50); toc          % kmeans clustering
+tic; idx = kmeans(V1, nc+1, 'Replicates', 10); toc          % kmeans clustering
 
 %% plot partition
 figure(3); clf; surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
@@ -86,5 +87,5 @@ for l = 2:nc+1
     TS = T(S); TS = TS(:,[2,4]);
     scatter3(TS(:,1),TS(:,2),zeros(length(I),1),10,cmap(l,:),'filled'); 
 end
-view(2); axis([-8 2 -33 -27])
+view(2); axis equal; axis([-8 2 -33 -27]); colorbar
 xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');

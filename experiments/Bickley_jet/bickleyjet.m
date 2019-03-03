@@ -1,4 +1,4 @@
-function dy = bickleyjet_vf(t,y)
+function dy = bickleyjet(t,y)
 
 U=62.66e-6;
 L=1770e-3;

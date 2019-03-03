@@ -1,196 +1,405 @@
-function [c,h]=tricontour(tri,x,y,z,nv)
-%TRICONTOUR Triangular Contour Plot.
-% TRICONTOUR(TRI,X,Y,Z,N) draws scalar N contour lines treating the values
-% in Z as heights above a plane. TRI,X,Y,and Z define a triangulation where
-% the triangles are defined by the M-by-3 face matrix TRI, such as that
-% returned by DELAUNAY. Each row of TRI contains indices into the X,Y, and
-% Z vertex vectors to define a single triangular face. Contours are
-% computed directly from the triangulation rather than interpolating back
-% to a cartesian grid using GRIDDATA.
-% TRICONTOUR(TRI,X,Y,Z,V) draws length(V) contour lines at the values
-% specified in vector V.
-% TRICONTOUR(TRI,X,Y,Z,[v v]) draws a single contour line at the level v.
+function [cout,hout] = tricontour(p,t,Hn,N)
+
+% Contouring for functions defined on triangular meshes
 %
-% [C,H] = TRICONTOUR(...) returns contour matrix C as described in CONTOURC
-% and a vector of handles H to the created patch objects.
-% H can be used to set patch properties.
-% CLABEL(C) or CLABEL(C,H) labels the contour levels.
+%   TRICONTOUR(p,t,F,N)
 %
-% Example:
-%           x=linspace(-3,3,39);
-%           y=linspace(-2.5,2.5,49);
-%           [xx,yy]=meshgrid(x,y);
-%           zz=peaks(xx,yy);
-%           v=-3:1:5; % contour levels
-%           subplot(1,2,1)
-%           [C,h]=contour(xx,yy,zz,v);   % standard contour for comparison
-%           clabel(C)
-%           title Contour
-% 
-%           idx=randperm(numel(zz));     % grab some scattered indices
-%           n=idx(1:ceil(numel(zz)/2))'; % one half of them
-%           x=xx(n);                     % get scattered data
-%           y=yy(n);
-%           z=zz(n);
-%           tri=delaunay(x,y);           % triangulate scattered data
-%           subplot(1,2,2)
-%           [C,h]=tricontour(tri,x,y,z,v);
-%           clabel(C,h)
-%           title TriContour
+% Draws contours of the surface F, where F is defined on the triangulation
+% [p,t]. These inputs define the xy co-ordinates of the points and their
+% connectivity:
 %
-% view(3) displays the contour in 3-D.
+%   P = [x1,y1; x2,y2; etc],            - xy co-ordinates of nodes in the 
+%                                         triangulation
+%   T = [n11,n12,n13; n21,n23,n23; etc] - node numbers in each triangle
 %
-% See also DELAUNAY, CONTOUR, TRIMESH, TRISURF, TRIPLOT, PATCH.
+% The last input N defines the contouring levels. There are several
+% options:
+%
+%   N scalar - N number of equally spaced contours will be drawn
+%   N vector - Draws contours at the levels specified in N
+%
+% A special call with a two element N where both elements are equal draws a
+% single contour at that level.
+%
+%   [C,H] = TRICONTOUR(...)
+%
+% This syntax can be used to pass the contour matrix C and the contour
+% handels H to clabel by adding clabel(c,h) or clabel(c) after the call to
+% TRICONTOUR.
+%
+% TRICONTOUR can also return 3D contours similar to CONTOUR3 by adding
+% view(3) after the call to TRICONTOUR.
+%
+% Type "contourdemo" for some examples.
+%
+% See also, CONTOUR, CLABEL
 
-% D.C. Hanselman, University of Maine, Orono, ME 04469
-% MasteringMatlab@yahoo.com
-% Mastering MATLAB 7
-% 2006-05-07, 2006-05-16, 2006-07-25
+% This function does NOT interpolate back onto a Cartesian grid, but
+% instead uses the triangulation directly.
+%
+% If your going to use this inside a loop with the same [p,t] a good
+% modification is to make the connectivity "mkcon" once outside the loop
+% because usually about 50% of the time is spent in "mkcon".
+%
+% Darren Engwirda - 2005 (d_engwirda@hotmail.com)
+% Updated 15/05/2006
 
-if nargin<5
-	error('Not Enough Input Arguments.')
+
+% I/O checking
+if nargin~=4
+    error('Incorrect number of inputs')
 end
-x=x(:);	% convert input data into column vectors
-y=y(:);
-z=z(:);
-xlen=length(x);
-if ~isequal(xlen,length(y),length(z))
-   error('X, Y, and Z Must Have the Same Number of Elements.')
-end
-if size(tri,2)~=3 || any(tri(:)<0) || any(tri(:)>xlen)
-   error('TRI Must Be a Valid Triangulation of the Data in X, Y, Z.')
-end
-
-zs=z(tri);
-zmax=max(max(zs));              % find max and min in z data that is in tri
-zmin=min(min(zs));
-
-if length(nv)==1                                 % nv is number of contours
-   zlev=linspace(zmax,zmin,nv+2);
-elseif length(nv)==2 && nv(1)==nv(2)              % nv is one contour level
-   zlev=nv(1);
-else                                       % nv is vector of contour levels
-   zlev=sort(nv,'descend');
-end
-zlev(zlev>=zmax | zlev<=zmin)=[];  % eliminate contours outside data limits
-nlev=length(zlev);
-
-if nlev==0
-   error('No Contours to Plot. Chosen Contours Outside Limits of Data.')
-end
-
-% precondition the input data
-[zs,zidx]=sort(zs,2);         % sort vertices by z value ascending
-for k=1:size(zs,1)            % shuffle triangles to match
-   tri(k,:)=tri(k,zidx(k,:));
+if nargout>2
+    error('Incorrect number of outputs')
 end
 
-hax=newplot;                  % create new axis if needed
-h=[];                         % patch handle storage
-C=zeros(2,0);                 % Clabel data storage
-cs=[2 1];                     % column swap vector cs(1)=2, cs(2)=1;
-
-% Main Loop ---------------------------------------------------------------
-for v=1:nlev                  % one contour level at a time
-   zc=zlev(v);                % chosen level
-   above=zs>=zc;              % true for vertices above given contour
-   numabove=sum(above,2);     % number of triangle vertices above contour
-   tri1=tri(numabove==1,:);   % triangles with one vertex above contour
-   tri2=tri(numabove==2,:);   % triangles with two vertices above contour
-   n1=size(tri1,1);           % number with one vertex above
-   n2=size(tri2,1);           % number with two vertices above
-
-   edge=[tri1(:,[1 3])        % first column is indices below contour level
-         tri1(:,[2 3])        % second column is indices above contour level
-         tri2(:,[1 2])
-         tri2(:,[1 3])];
-   if n1==0                   % assign edges to triangle number
-      n=[1:n2 1:n2]';
-   elseif n2==0
-      n=[1:n1 1:n1]';
-   else
-      n=[1:n1 1:n1 n1+(1:n2) n1+(1:n2)]';
-   end
-
-   [edge,idx]=sortrows(edge);    % put shared edges next to each other
-   n=n(idx);                     % shuffle triangle numbers to match
-
-   idx=all(diff(edge)==0,2);     % find shared edges
-   idx=[idx;false]|[false;idx];  % True for all shared edges
-   
-   % eliminate redundant edges, two triangles per interior edge
-   edgeh=edge(~idx,:);           % hull edges
-   nh=n(~idx);                   % hull triangle numbers
-   if ~isempty(nh)
-      nh(end,2)=0;               % zero second column for hull edges
-   end
-   edges=edge(idx,:);            % shared edges
-   edges=edges(1:2:end-1,:);     % take only unique edges
-   ns=n(idx);                    % interior triangle numbers
-   ns=[ns(1:2:end) ns(2:2:end)]; % second column is second triangle
-   edge=[edgeh;edges];           % unique edges
-   nn=[nh;ns];                   % two columns of triangle numbers
-   ne=size(edge,1);              % number of edges
-   
-   flag=true(ne,2);              % true for each unused edge per triangle
-   tmp=zeros(ne+1,1);            % contour data temporary storage
-   
-   xe=x(edge);                   % x values at vertices of edges
-   ye=y(edge);                   % y values at  vertices of edges
-   ze=z(edge);                   % z data at  vertices of edges
-
-   alpha=(zc-ze(:,1))./(ze(:,2)-ze(:,1)); % interpolate all edges
-   xc=alpha.*(xe(:,2)-xe(:,1)) + xe(:,1); % x values on this contour
-   yc=alpha.*(ye(:,2)-ye(:,1)) + ye(:,1); % y values on this contour
-
-   while any(flag)	% while there are still unused edges -----------------
-      
-      xtmp=tmp;
-      ytmp=tmp;
-      [ir,ic]=find(flag,1);            % find next unused edge
-      flag(ir,ic)=false;               % mark this edge used
-      
-      k=1;                             % first data point in subcontour
-      xtmp(k)=xc(ir);                  % store data from this edge
-      ytmp(k)=yc(ir);
-      
-      while true     % complete this subcontour ---------------------------
-         
-         [ir,ic]=find(flag&nn(ir,ic)==nn,1);% find other edge of triangle
-         flag(ir,ic)=false;            % mark this edge used
-         k=k+1;
-         xtmp(k)=xc(ir);               % store data from this edge
-         ytmp(k)=yc(ir);
-         
-         ic=cs(ic);                    % other triangle that shares edge
-
-         if nn(ir,ic)==0               % reached hull, subcontour complete
-            k=k+1;
-            xtmp(k)=nan;               % don't let subcontour close
-            ytmp(k)=nan;
-            break
-         elseif ~flag(ir,ic)           % complete closed subcontour
-            break
-         else                          % more points remain on subcontour
-            flag(ir,ic)=false;         % mark this edge used
-         end
-      end % while true ----------------------------------------------------
-      xtmp(k+1:end)=[];                % throw away unused storage
-      ytmp(k+1:end)=[];                % xtmp,ytmp contain subcontour
-      
-      if nargout<2                     % plot the subcontour
-         patch('XData',xtmp,'YData',ytmp,'CData',repmat(zc,k,1),...
-               'Parent',hax,'FaceColor','none','EdgeColor','flat',...
-               'UserData',zc)
-         C=horzcat(C,[zc xtmp';k ytmp']); % contour label data
-      else                             % plot subcontour and create output
-         h=[h;patch('XData',xtmp,'YData',ytmp,'CData',repmat(zc,k,1),...
-         'Parent',hax,'FaceColor','none','EdgeColor','flat',...
-         'UserData',zc)]; %#ok
-         C=horzcat(C,[zc xtmp';k ytmp']); % contour label data
-      end
-   end % while any(flag) --------------------------------------------------
-end % for v=1:nlev
-if nargout
-   c=C;
+% Error checking
+if (size(p,2)~=2) || (size(t,2)~=3) || (size(Hn,2)~=1)
+    error('Incorrect input dimensions')
 end
+if size(p,1)~=size(Hn,1)
+    error('F and p must be the same length')
+end
+if (max(t(:))>size(p,1)) || (min(t(:))<=0)
+    error('t is not a valid triangulation of p')
+end
+if (size(N,1)>1) && (size(N,2)>1)
+    error('N cannot be a matrix')
+end
+
+% Make mesh connectivity data structures (edge based pointers)
+[e,eINt,e2t] = mkcon(p,t);
+
+numt = size(t,1);       % Num triangles
+nume = size(e,1);       % Num edges
+
+
+
+%==========================================================================
+%                Quadratic interpolation to centroids
+%==========================================================================
+
+% Nodes
+t1 = t(:,1); t2 = t(:,2); t3 = t(:,3);
+
+% FORM FEM GRADIENTS
+% Evaluate centroidal gradients (piecewise-linear interpolants)
+x23 = p(t2,1)-p(t3,1);  y23 = p(t2,2)-p(t3,2);
+x21 = p(t2,1)-p(t1,1);  y21 = p(t2,2)-p(t1,2);
+
+% Centroidal values
+Htx = (y23.*Hn(t1) + (y21-y23).*Hn(t2) - y21.*Hn(t3)) ./ (x23.*y21-x21.*y23);
+Hty = (x23.*Hn(t1) + (x21-x23).*Hn(t2) - x21.*Hn(t3)) ./ (y23.*x21-y21.*x23);
+
+% Form nodal gradients.
+% Take the average of the neighbouring centroidal values
+Hnx = 0*Hn; Hny = Hnx; count = Hnx;
+for k = 1:numt
+    % Nodes
+    n1 = t1(k); n2 = t2(k); n3 = t3(k);
+    % Current values
+    Hx = Htx(k); Hy = Hty(k);
+    % Average to n1
+    Hnx(n1)   = Hnx(n1)+Hx;
+    Hny(n1)   = Hny(n1)+Hy;
+    count(n1) = count(n1)+1;
+    % Average to n2
+    Hnx(n2)   = Hnx(n2)+Hx;
+    Hny(n2)   = Hny(n2)+Hy;
+    count(n2) = count(n2)+1;
+    % Average to n3
+    Hnx(n3)   = Hnx(n3)+Hx;
+    Hny(n3)   = Hny(n3)+Hy;
+    count(n3) = count(n3)+1;
+end
+Hnx = Hnx./count;
+Hny = Hny./count;
+
+% Centroids [x,y]
+pt = (p(t1,:)+p(t2,:)+p(t3,:))/3;
+
+% Take unweighted average of the linear extrapolation from nodes to centroids
+Ht = ( Hn(t1) + (pt(:,1)-p(t1,1)).*Hnx(t1) + (pt(:,2)-p(t1,2)).*Hny(t1) + ...
+       Hn(t2) + (pt(:,1)-p(t2,1)).*Hnx(t2) + (pt(:,2)-p(t2,2)).*Hny(t2) + ...
+       Hn(t3) + (pt(:,1)-p(t3,1)).*Hnx(t3) + (pt(:,2)-p(t3,2)).*Hny(t3) )/3;
+
+
+
+% DEAL WITH CONTOURING LEVELS
+if length(N)==1
+    lev = linspace(max(Ht),min(Ht),N+1);
+    num = N;
+else
+    if (length(N)==2) && (N(1)==N(2))
+        lev = N(1);
+        num = 1;
+    else
+        lev = sort(N);
+        num = length(N);
+        lev = lev(num:-1:1);
+    end
+end
+
+% MAIN LOOP
+c   = [];
+h   = [];
+in  = false(numt,1);
+vec = 1:numt;
+old = in;
+for v = 1:num       % Loop over contouring levels
+    
+    % Find centroid values >= current level
+    i     = vec(Ht>=lev(v));
+    i     = i(~old(i));         % Don't need to check triangles from higher levels
+    in(i) = true;
+    
+    % Locate boundary edges in group
+    bnd  = [i; i; i];       % Just to alloc
+    next = 1;
+    for k = 1:length(i)
+        ct    = i(k);
+        count = 0;
+        for q = 1:3     % Loop through edges in ct
+            ce = eINt(ct,q);
+            if ~in(e2t(ce,1)) || ((e2t(ce,2)>0)&&~in(e2t(ce,2)))    
+                bnd(next) = ce;     % Found bnd edge
+                next      = next+1;
+            else
+                count = count+1;    % Count number of non-bnd edges in ct
+            end
+        end
+        if count==3                 % If 3 non-bnd edges ct must be in middle of group
+            old(ct) = true;         % & doesn't need to be checked for the next level
+        end
+    end
+    numb = next-1; bnd(next:end) = [];
+    
+    % Skip to next lev if empty
+    if numb==0
+        continue
+    end
+    
+    % Place nodes approximately on contours by interpolating across bnd
+    % edges    
+    t1  = e2t(bnd,1);
+    t2  = e2t(bnd,2);
+    ok  = t2>0;
+    
+    % Get two points for interpolation. Always use t1 centroid and 
+    % use t2 centroid for internal edges and bnd midpoint for boundary 
+    % edges
+    
+    % 1st point is always t1 centroid
+    H1 = Ht(t1);                                                % Centroid value
+    p1 = ( p(t(t1,1),:)+p(t(t1,2),:)+p(t(t1,3),:) )/3;          % Centroid [x,y]
+    
+    % 2nd point is either t2 centroid or bnd edge midpoint
+    i1        = t2(ok);                                         % Temp indexing
+    i2        = bnd(~ok);
+    H2        = H1;
+    H2(ok)    = Ht(i1);                                         % Centroid values internally
+    H2(~ok)   = ( Hn(e(i2,1))+Hn(e(i2,2)) )/2;                  % Edge values at boundary
+    p2        = p1;
+    p2(ok,:)  = ( p(t(i1,1),:)+p(t(i1,2),:)+p(t(i1,3),:) )/3;   % Centroid [x,y] internally
+    p2(~ok,:) = ( p(e(i2,1),:)+p(e(i2,2),:) )/2;                % Edge [x,y] at boundary
+    
+    % Linear interpolation
+    r     = (lev(v)-H1)./(H2-H1);
+    penew = p1 + [r,r].*(p2-p1);
+    
+    % Do a temp connection between adjusted node & endpoint nodes in
+    % ce so that the connectivity between neighbouring adjusted nodes
+    % can be determined
+    vecb    = (1:numb)';
+    m       = 2*vecb-1;
+    c1      = 0*m;
+    c2      = 0*m;
+    c1(m)   = e(bnd,1);
+    c1(m+1) = e(bnd,2);
+    c2(m)   = vecb;
+    c2(m+1) = vecb;
+    
+    % Sort connectivity to place connected edges in sucessive rows
+    [c1,i] = sort(c1); c2 = c2(i);
+    
+    % Connect adjacent adjusted nodes
+    k    = 1;
+    next = 1;
+    while k<(2*numb)
+        if c1(k)==c1(k+1)
+            c1(next) = c2(k);
+            c2(next) = c2(k+1);
+            next     = next+1;
+            k        = k+2;         % Skip over connected edge
+        else
+            k = k+1;                % Node has only 1 connection - will be picked up above
+        end
+    end
+    ncc          = next-1; 
+    c1(next:end) = []; 
+    c2(next:end) = [];
+    
+    
+    % Plot the contours
+    % If an output is required, extra sorting of the
+    % contours is necessary for CLABEL to work.   
+    if nargout>0
+        
+        % Form connectivity for the contour, connecting 
+        % its edges (rows in cc) with its vertices.
+        ndx = repmat(1,nume,1);
+        n2e = 0*penew;
+        for k = 1:ncc
+            % Vertices
+            n1 = c1(k); n2 = c2(k);
+            % Connectivity
+            n2e(n1,ndx(n1)) = k; ndx(n1) = ndx(n1)+1;
+            n2e(n2,ndx(n2)) = k; ndx(n2) = ndx(n2)+1;
+        end
+        bndn = n2e(:,2)==0;         % Boundary nodes
+        bnde = bndn(c1)|bndn(c2);   % Boundary edges
+        
+        % Alloc some space
+        tmpv = repmat(0,1,ncc);
+        
+        % Loop through the points at the current contour level (lev(v))
+        % Try to assemble the CS data structure introduced in "contours.m"
+        % so that clabel will work. Assemble CS by "walking" around each 
+        % subcontour segment contiguously.
+        ce    = 1;
+        start = ce;
+        next  = 2;
+        cn    = c2(1);
+        flag  = false(ncc,1);        
+        x     = tmpv; x(1) = penew(c1(ce),1);
+        y     = tmpv; y(1) = penew(c1(ce),2);
+        for k = 1:ncc
+            
+            % Checked this edge
+            flag(ce) = true;
+            
+            % Add vertices to patch data
+            x(next) = penew(cn,1);
+            y(next) = penew(cn,2);
+            next    = next+1;
+            
+            % Find edge (that is not ce) joined to cn
+            if ce==n2e(cn,1)
+                ce = n2e(cn,2);
+            else
+                ce = n2e(cn,1);
+            end
+            
+            % Check the new edge
+            if (ce==0)||(ce==start)||(flag(ce))     
+               
+                % Plot current subcontour as a patch and save handles
+                x   = x(1:next-1);
+                y   = y(1:next-1);
+                z   = repmat(lev(v),1,next);
+                h   = [h; patch('Xdata',[x,NaN],'Ydata',[y,NaN],'Zdata',z, ...
+                                'Cdata',z,'facecolor','none','edgecolor','flat')]; hold on      
+                
+                % Update the CS data structure as per "contours.m"
+                % so that clabel works
+                c = horzcat(c,[lev(v), x; next-1, y]);
+                
+                if all(flag)    % No more points at lev(v)
+                    break
+                else            % More points, but need to start a new subcontour
+                    
+                    % Find the unflagged edges
+                    edges = find(~flag);
+                    ce    = edges(1);
+                    % Try to select a boundary edge so that we are 
+                    % not repeatedly running into the boundary
+                    for i = 1:length(edges)
+                        if bnde(edges(i))
+                            ce = edges(i); break
+                        end
+                    end
+                    % Reset counters
+                    start = ce;
+                    next  = 2;
+                    % Get the non bnd node in ce
+                    if bndn(c2(ce))
+                        cn = c1(ce);
+                        % New patch vectors
+                        x = tmpv; x(1) = penew(c2(ce),1);
+                        y = tmpv; y(1) = penew(c2(ce),2);
+                    else
+                        cn = c2(ce);
+                        % New patch vectors
+                        x = tmpv; x(1) = penew(c1(ce),1);
+                        y = tmpv; y(1) = penew(c1(ce),2);
+                    end                    
+                    
+                end
+            
+            else                            
+                % Find node (that is not cn) in ce
+                if cn==c1(ce)
+                    cn = c2(ce);
+                else
+                    cn = c1(ce);
+                end
+            end
+            
+        end
+        
+    else        % Just plot the contours as is, this is faster...
+        
+        z = repmat(lev(v),2,ncc);
+        
+        patch('Xdata',[penew(c1,1),penew(c2,1)]', ...
+              'Ydata',[penew(c1,2),penew(c2,2)]', ...
+              'Zdata',z,'Cdata',z,'facecolor','none','edgecolor','flat'); 
+          
+        hold on
+        
+    end
+    
+end
+
+% Assign outputs if needed
+if nargout>0
+    cout = c;
+    hout = h;
+end
+
+return
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [e,eINt,e2t] = mkcon(p,t)
+
+numt = size(t,1);
+vect = 1:numt;
+
+% DETERMINE UNIQUE EDGES IN MESH
+ 
+e       = [t(:,[1,2]); t(:,[2,3]); t(:,[3,1])];             % Edges - not unique
+vec     = (1:size(e,1))';                                   % List of edge numbers
+[e,j,j] = unique(sort(e,2),'rows');                         % Unique edges
+vec     = vec(j);                                           % Unique edge numbers
+eINt    = [vec(vect), vec(vect+numt), vec(vect+2*numt)];    % Unique edges in each triangle
+
+% DETERMINE EDGE TO TRIANGLE CONNECTIVITY
+
+% Each row has two entries corresponding to the triangle numbers
+% associated with each edge. Boundary edges have one entry = 0.
+nume = size(e,1);
+e2t  = repmat(0,nume,2);
+ndx  = repmat(1,nume,1);
+for k = 1:numt
+    % Edge in kth triangle
+    e1 = eINt(k,1); e2 = eINt(k,2); e3 = eINt(k,3);
+    % Edge 1
+    e2t(e1,ndx(e1)) = k; ndx(e1) = ndx(e1)+1;
+    % Edge 2
+    e2t(e2,ndx(e2)) = k; ndx(e2) = ndx(e2)+1;
+    % Edge 3
+    e2t(e3,ndx(e3)) = k; ndx(e3) = ndx(e3)+1;
+end
+
+return

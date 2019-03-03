@@ -1,4 +1,4 @@
-addpath('../../src'); clear all; clc; colormap jet
+addpath('../../src','../../src/2d'); clear all; clc; colormap jet
 
 %% flow map 
 t0 = 0; days = 60*60*24; tf = 40*days; nt = 11;  % number of time steps for Laplacian
@@ -6,7 +6,7 @@ T = @(x) flow_map(@bickleyjet,x,linspace(t0,tf,nt));
 
 %% triangulation
 dim = 2; % dimension of state space
-nx = 100;  ny = nx/20*6;  n = nx*ny;
+nx = 120;  ny = nx/20*6;  n = nx*ny;
 [xi,yi] = meshgrid(linspace(0,20.01,nx),linspace(-3,3,ny));
 p0 = [xi(:) yi(:)]; 
 
@@ -39,7 +39,7 @@ figure(1); clf; plot(lam,'*'); axis tight, axis square
 xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvector
-figure(2); ev_no = 6;
+figure(2); ev_no = 9;
 pI = p{1}(I,:); tI = delaunay(pI); pbI = [1:length(I);1:length(I)]';
 plotf(pI,tI,pbI,normed(V(:,ev_no)),0); caxis([-1,1]); colorbar
 xlabel('$x$'); ylabel('$y$'); 
@@ -47,9 +47,9 @@ xlabel('$x$'); ylabel('$y$');
 %% compute partition
 nx1 = 400; ny1 = nx1/20*6; 
 [X1,Y1] = meshgrid(linspace(0,20,nx1),linspace(-3,3,ny1)); 
-nc = 8;  
+nc = 9;  
 V1 = eval_p1(pI,V(:,1:nc),[X1(:) Y1(:)]);  % evaluate eigenvectors on grid
-idx = kmeans(V1,nc,'Replicates',10);       % kmeans clustering
+idx = kmeans(V1,nc,'Replicates',20);       % kmeans clustering
 
 %% plot partition
 figure(3); subplot(313);  clf; 

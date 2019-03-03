@@ -1,4 +1,4 @@
-addpath('../../src'); clear all; colormap jet; clc
+addpath('../../src/2d'); clear all; colormap jet; 
 
 %% rotating double gyre map 
 t0 = 0; tf = 1; nt = 2; tspan = linspace(t0,tf,nt);
@@ -7,18 +7,18 @@ CG = @(x) inv_CG(@double_gyre,x,tspan);
 %% triangulation
 n = 25; x = linspace(0,1,n);
 [X,Y] = meshgrid(x,x); p = [X(:) Y(:)];     % nodes
-% p = rand(n^2,2);                           % for Fig. 3
+% p = rand(n^2,2);                          % for Fig. 3
 pb = [1:n^2; 1:n^2]';                       % nonperiodic boundary
 t = delaunay(p);                            % t is m by 3 matrix of triangles
 
 %% assembly 
-deg = 5;                                    % degree of quadrature
-tic; G = inv_CG_quad(p,t,CG,deg);  toc        % compute inverse Cauchy-Green tensors
+deg = 2;                                    % degree of quadrature
+tic; G = inv_CG_quad(p,t,CG,deg);  toc      % compute inverse Cauchy-Green tensors
 tic; [D,M] = assemble(p,t,pb,G);  toc       % assemble stiffness and mass matrices
 
 %% solve eigenproblem
-tic; [V,L] = eigs(D,M,10,'SM'); toc
-[lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
+tic; [V,L] = eigs(D,M,6,'SM'); toc
+[lam,ord] = sort(diag(L),'descend'); lam, V = V(:,ord);
 
 %% plot spectrum
 figure(1); plot(lam,'*'); axis tight, axis square
@@ -33,13 +33,13 @@ xlabel('$x$'); ylabel('$y$');
 %% compute partition
 n1 = 200; x1 = linspace(0,1,n1); 
 [X1,Y1] = meshgrid(x1,x1); 
-V1 = eval_p1(p,V(:,1:3),[X1(:) Y1(:)]);     % evaluate eigenvectors on grid
-idx = kmeans(V1, size(V1,2),'Replicates',10);           % kmeans clustering
+tic; V1 = eval_p1(p,V(:,1:4),[X1(:) Y1(:)]);  toc   % evaluate eigenvectors on grid
+tic; idx = kmeans(V1, size(V1,2),'Replicates',10);  toc         % kmeans clustering
 
 %% plot partition
 figure(3); clf; surf(X1,Y1,reshape(idx,n1,n1)); view(2); shading flat
 axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
-colormap(70*[ 1 1 1; 2 2 2; 3 3 3]/255);
+colormap(50*[ 1 1 1; 2 2 2; 3 3 3; 4 4 4]/255);
 
 %% plot CG tensor
 figure(4); clf

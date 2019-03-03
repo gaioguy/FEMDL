@@ -1,4 +1,5 @@
-addpath('../../src'); clear all; 
+addpath('../../src','../../src/2d'); clear all; 
+cols = @(A,I) A(:,I);
 
 %% flow map 
 t0 = 0; days = 60*60*24; tf = 40*days; nt = 2; 
@@ -15,12 +16,12 @@ pb = [1:n; [1:((nx-1)*ny), 1:ny]]';             % boundary periodic in x
 t = delaunay(p); 
 
 %% assembly
-deg = 1;                                        % degree of quadrature
+deg = 2;                                        % degree of quadrature
 tic; G = inv_CG_quad(p,t,CG,deg); toc
 tic; [D,M] = assemble(p,t,pb,G); toc
 
 %% solve eigenproblem
-tic; [V,L] = eigs(D+speye(size(D))*1e-8,M,15,'SM'); toc
+tic; [V,L] = eigs(D,M,15,'SM'); toc
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
 %% plot spectrum
@@ -28,8 +29,8 @@ figure(1); clf; plot(lam,'*'); axis tight, axis square
 xlabel('$k$'); ylabel('$\lambda_k$')
 
 %% plot eigenvector
-figure(2), plotf(p,t,pb,normed(-V(:,3)),0); caxis([-1,1]); colorbar
-ylabel('$y$');  % xlabel('$x$'); 
+figure(2), plotf(p,t,pb,normed(V(:,3)),0); caxis([-1,1]); colorbar
+ylabel('$y$');  xlabel('$x$'); 
 
 %% compute partition
 nx1 = 400; ny1 = nx1/20*6; x1 = linspace(0,20,nx1); y1 = linspace(-3,3,ny1);
@@ -42,5 +43,17 @@ idx = kmeans(V1, size(V1,2),'Replicates',10);       % kmeans clustering
 figure(3); clf; 
 surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
 axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
+
+%% advect abd plot LCS
+figure(4); clf; hold on; caxis([1 nc])
+T = @(x) cols(flow_map(@bickleyjet,x,tspan),[2,4]);
+for l = 2:nc
+    I = find(idx==l); 
+    S = [X1(I) Y1(I)]; 
+    TS = T(S); TS(:,1) = mod(TS(:,1),20);
+    scatter(TS(:,1),TS(:,2),10,'filled'); 
+end
+view(2); axis equal; axis([0 20 -3 3]); 
+xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');
 
 

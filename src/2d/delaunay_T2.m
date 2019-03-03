@@ -20,13 +20,13 @@ xmin = box(1); xmax = box(2); ymin = box(3); ymax = box(4);
 dx = xmax-xmin; dy = ymax-ymin;
 dp = [dx 0; dx dy; 0 dy; -dx dy; -dx 0; -dx -dy; 0 -dy; dx -dy];
 P = [p; p+dp(1,:); p+dp(2,:); p+dp(3,:); p+dp(4,:); p+dp(5,:); p+dp(6,:); p+dp(7,:); p+dp(8,:);];
-%clf; scatter(P(:,1),P(:,2),10,'b','filled'); hold on
+% clf; scatter(P(:,1),P(:,2),10,'b','filled'); hold on
 PB = repmat(1:n,1,9);
 
 %% construct triangulation and sort points
-aS = alphaShape(P(:,1),P(:,2),6);
+aS = alphaShape(P(:,1),P(:,2),1);
 t = alphaTriangulation(aS);
-%triplot(t,P(:,1),P(:,2),'b'); hold on; axis tight
+% triplot(t,P(:,1),P(:,2),'b','linewidth',1); hold on; axis tight
 
 %% extract triangles with at least one vertex in original domain
 in = 1:n;           % vertices in original domain
@@ -42,7 +42,7 @@ t1 = t(adj,:);
 %% remove duplicate triangles
 flags = sum(t1 > 4*n,2) == 0;  % test if some vertex of a triangle is outside
 t2 = t1(find(flags),:);
-triplot(t2,P(:,1),P(:,2),'m');
+% triplot(t2,P(:,1),P(:,2),'m');
 
 %% extract required points and corresponding triangles
 all = unique(t2(:)); 

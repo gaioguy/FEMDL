@@ -3,7 +3,7 @@ function a = quad_basis(p,t,pb,h)
 %% QUAD_BASIS compute integrals of basis functions
 %
 %  a = QUAD_BASIS(p,t,pb,h) computes the integrals of the P1 Lagrange basis
-%  functions over the domain of the triangulation
+%  functions over the domain of the triangulation w.r.t. the density h
 %   p: (n x 2), one node per row
 %   t: (m x 3), integers, each row defines a triangle by indexing into p
 %   pb: (n x 2), node pb(i,2) maps to pb(i,1) (for perodic boundaries)
@@ -13,7 +13,7 @@ function a = quad_basis(p,t,pb,h)
 %
 % (C) 2017 by O. Junge, see COPYRIGHT 
 
-n = max(pb(:,2));                   % number of nodes
+n = max(pb(:,2));                             % number of nodes
 m = size(t,1);   
 deg = 3; 
 

@@ -1,9 +1,9 @@
-addpath('../../src'); clear all; clc; colormap jet
-extract = @(A,I) A(:,I);
+addpath('../../src/2d'); clear all; clc; colormap jet
+cols = @(A,I) A(:,I);
 
 %% flow map 
 t0 = 0; tf = 1; nt = 2; tspan = linspace(tf,t0,nt);
-T1 = @(x) extract(flow_map(@double_gyre,x,tspan),[2,4]);
+T1 = @(x) cols(flow_map(@double_gyre,x,tspan),[2,4]);
 
 %% nodes 
 n = 25; x = linspace(0,1,n);

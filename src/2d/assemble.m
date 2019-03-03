@@ -6,7 +6,7 @@ function [D,M] = assemble(p,t,pb,G)
 %   p: (n x 2), one node per row
 %   t: (m x 3), integers, each row defines a triangle by indexing into p
 %   pb: (n x 2), node pb(i,2) maps to pb(i,1) (for perodic boundaries)
-%   G: (m x 3), each row defines a tensor on the correspondig triangle
+%   G: (m x 3), each row defines a symmetric 2x2 matrix on the correspondig triangle
 %
 % based on code from ifem by Long Chen
 %

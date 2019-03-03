@@ -1,8 +1,8 @@
-function [CG,DT] = cg_tensor(v,x,tspan)
+function [CG,DT] = inv_CG(v,x,tspan)
 
-%% CG_TENSOR compute averaged Cauchy-Green tensor
+%% INV_CG compute averaged Cauchy-Green tensor
 %
-% CG = cg_tensor(v,x,tspan)
+% CG = inv_CG(v,x,tspan)
 %   v: velocity field, function handle of the form v(t,x)
 %   x: (n x 2), intial data in 2D
 %   tspan: vector of time instances

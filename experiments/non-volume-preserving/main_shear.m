@@ -1,4 +1,4 @@
-addpath('../../src'); clear all
+addpath('../../src','../../src/2d'); clear all
 
 %% flow map T1
 t0 = 0; tf = 1; nt = 2;  
@@ -14,12 +14,12 @@ h = @(x) 1/8*(sin(pi*x(:,1))+2);
 nx = 60;  ny = nx/4;  n = (nx-1)*ny; dx = 4/(nx-1); 
 [xi,yi] = meshgrid(linspace(0,4-dx,nx-1),linspace(0,1,ny));
 p0{1} = [xi(:) yi(:)];  
-[p{1},t{1},pb{1}] = delaunay_C2(p0{1},[0,4]); 
+[p{1},t{1},pb{1}] = delaunay_C2(p0{1},4); 
 
 %% time integration and mesh construction
 tic; for k = 1:nt-1, 
     p0{k+1} = T(p0{k}); 
-    [p{k+1},t{k+1},pb{k+1}] = delaunay_C2(p0{k+1},[0,4]);
+    [p{k+1},t{k+1},pb{k+1}] = delaunay_C2(p0{k+1},4);
 end; toc
 
 %% assembly
@@ -37,11 +37,11 @@ tic; [V,L] = eigs(D,Mt{1},5,'SM'); toc
 
 %% plot eigenvector
 figure(1), clf;  clear w
-w(pb{1}(:,1)) = V(pb{1}(:,2),2); w = w/norm(w,inf); 
-subplot(211); tricontour(t{1},p{1}(:,1),p{1}(:,2),-w,7);
+w(pb{1}(:,1)) = V(pb{1}(:,2),2); 
+subplot(211); tricontour(p{1},t{1},-normed(w'),7);
 axis equal, axis([0 4 0 1]), box on
-w(pb{2}(:,1)) = V(pb{2}(:,2),2); w = w/norm(w,inf); 
-subplot(212); tricontour(t{2},p{2}(:,1),p{2}(:,2),w,7); 
+w(pb{2}(:,1)) = V(pb{2}(:,2),2); 
+subplot(212); tricontour(p{2},t{2},normed(w'),7); 
 axis equal, axis([0 4 0 1]), box on
 
 %% image density

@@ -1,4 +1,4 @@
-function dz = rotating_double_gyre_vf(t,z)
+function dz = double_gyre(t,z)
 
 n = numel(z)/2;
 x = z(1:n,1);

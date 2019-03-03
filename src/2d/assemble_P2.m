@@ -36,7 +36,7 @@ end
 %% quadrature points
 quadorder = 2;          % default order
 [lam, w] = quadpts(quadorder);
-nq = size(lam,1);    % number of quad points
+nq = size(lam,1);       % number of quad points
 
 sD = zeros(21*m,nq);
 sM = zeros(21*m,nq);
