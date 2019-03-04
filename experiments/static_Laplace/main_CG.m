@@ -11,7 +11,7 @@ DLx = @(x) fapply1(DL, DT(x));              % evaluate DL at each row of x
 %% triangulation: square
 n = 100; x = linspace(0,1,n);
 [X,Y] = meshgrid(x,x); p = [X(:) Y(:)];     % nodes
-pb = [1:n^2; 1:n^2]';                       % nonperiodic boundary
+pb = [1:n^2; 1:n^2]';                      % nonperiodic boundary
 t = delaunay(p);                            % t is m by 3 matrix of triangles
 
 %% triangulation: circle

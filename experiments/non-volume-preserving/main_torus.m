@@ -4,8 +4,8 @@ addpath('../../src','../../src/2d'); clear all
 nx = 100;  ny = nx;  n = (nx-1)*(ny-1); dx = 2*pi/(nx-1); dy = dx;
 % [xi,yi] = meshgrid(linspace(0,2*pi-dx,nx-1),linspace(0,2*pi-dy,ny-1));
 % p0{1} = [xi(:) yi(:)];  
-p0{1} = rand((nx-1)^2,2)*diag([2*pi-dx,2*pi-dy]);
-tic; [p{1},t{1},pb{1}] = delaunay_T2(p0{1},[0,2*pi,0,2*pi]); toc
+p0(:,:,1) = rand((nx-1)^2,2)*diag([2*pi-dx,2*pi-dy]);
+tic; [p{1},t{1},pb{1}] = delaunay_T2(p0(:,:,1),[0,2*pi,0,2*pi]); toc
 
 %% flow map and initial density
 t0 = 0; tf = 1; nt = 2; 
@@ -16,8 +16,8 @@ h = @(x) 1/(8*pi^2)*(sin(x(:,2)-pi/2)+2);
 
 %% time integration and mesh construction
 tic; for k = 1:nt-1
-    p0{k+1} = T(p0{k}); 
-    [p{k+1},t{k+1},pb{k+1}] = delaunay_T2(p0{k+1},[0,2*pi,0,2*pi]);
+    p0(:,:,k+1) = T(p0(:,:,k)); 
+    [p{k+1},t{k+1},pb{k+1}] = delaunay_T2(p0(:,:,k+1),[0,2*pi,0,2*pi]);
 end; toc
 
 %% assembly
@@ -40,7 +40,7 @@ xlabel('$k$'); ylabel('$\lambda_k$')
 %% plot eigenvector ...
 figure(1), clf;  clear w; cl = [-0.8, -0.4, 0, 0.4, 0.8];
 w(pb{1}(:,1)) = V(pb{1}(:,2),2); w = w/norm(w,inf); 
-tricontour(p{1},t{1},normed(w'),cl); axis equal;axis([0 2*pi 0 2*pi]);  box on
+tricontour(p{1},t{1},normed(w'),cl); axis equal; axis([0 2*pi 0 2*pi]);  box on
 
 %% ... and its image
 figure(2), clf;  clear w; cl = [-0.8, -0.4, 0, 0.4, 0.8];
