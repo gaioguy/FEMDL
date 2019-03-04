@@ -49,8 +49,8 @@ phi(:,4) = 4*lam(:,2).*lam(:,3);
 phi(:,5) = 4*lam(:,3).*lam(:,1);
 phi(:,6) = 4*lam(:,1).*lam(:,2);
 
+PG = permute(G,[3 1 2]);
 for p = 1:nq
-
     % Dphip at quadrature points
     Dphip(:,:,1) = (4*lam(p,1)-1).*Dlam(:,:,1);            
     Dphip(:,:,2) = (4*lam(p,2)-1).*Dlam(:,:,2);            
@@ -64,10 +64,10 @@ for p = 1:nq
             Dij = 0; Mij = 0;
 %            Dij = Dij + w(p)*dot(Dphipp(:,:,i),Dphipp(:,:,j),2).*pde.d(pxy);
             % Dij = Dij + w(p)*dot(Dphipp(:,:,i),Dphipp(:,:,j),2);
-            Dij = Dij + w(p)*(Dphip(:,1,i).*G(:,1).*Dphip(:,1,j) ...
-                            + Dphip(:,1,i).*G(:,2).*Dphip(:,2,j) ...
-                            + Dphip(:,2,i).*G(:,2).*Dphip(:,1,j) ...
-                            + Dphip(:,2,i).*G(:,3).*Dphip(:,2,j));
+            Dij = Dij + w(p)*(Dphip(:,1,i).*PG(:,1,1).*Dphip(:,1,j) ...
+                            + Dphip(:,1,i).*PG(:,1,2).*Dphip(:,2,j) ...
+                            + Dphip(:,2,i).*PG(:,2,1).*Dphip(:,1,j) ...
+                            + Dphip(:,2,i).*PG(:,2,2).*Dphip(:,2,j));
             Mij = Mij + w(p)*phi(p,i).*phi(p,j);
             Dij = Dij.*area; Mij = Mij.*area;
             sD(I+1:I+m,p) = -Dij;

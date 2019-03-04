@@ -1,4 +1,4 @@
-function [D,M] = assemble2(mesh,G)
+function [D,M] = assemble2(p,t,pb,G)
 
 %% ASSEMBLE stiffness and mass matrices
 %
@@ -13,7 +13,6 @@ function [D,M] = assemble2(mesh,G)
 %
 % (C) 2017 by O. Junge and G. Froyland, see COPYRIGHT 
 
-p = mesh.p; t = mesh.t; pb = mesh.pb; b = mesh.b;
 n = max(pb(:,2)); m = size(t,1);
 [dphi,area] = gradbasis(p,t);
 

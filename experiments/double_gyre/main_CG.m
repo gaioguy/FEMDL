@@ -1,8 +1,12 @@
 addpath('../../src/2d'); clear all; colormap jet; 
+at_tf = @(A) squeeze(A(:,:,end,:));
 
 %% rotating double gyre map 
-t0 = 0; tf = 1; nt = 2; tspan = linspace(t0,tf,nt);
-CG = @(x) inv_CG(@double_gyre,x,tspan);
+t0 = 0; tf = 1; 
+vf = @double_gyre;
+DT  = @(x) at_tf(Dflow_map(vf,x,[t0 tf]));  % space derivative of flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplace
+DLx = @(x) fapply1(DL, DT(x));              % evaluate DL at each row of x
 
 %% triangulation
 n = 25; x = linspace(0,1,n);
@@ -13,12 +17,12 @@ t = delaunay(p);                            % t is m by 3 matrix of triangles
 
 %% assembly 
 deg = 2;                                    % degree of quadrature
-tic; G = inv_CG_quad(p,t,CG,deg);  toc      % compute inverse Cauchy-Green tensors
-tic; [D,M] = assemble(p,t,pb,G);  toc       % assemble stiffness and mass matrices
+tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
+tic; [D,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
 
 %% solve eigenproblem
 tic; [V,L] = eigs(D,M,6,'SM'); toc
-[lam,ord] = sort(diag(L),'descend'); lam, V = V(:,ord);
+[lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
 %% plot spectrum
 figure(1); plot(lam,'*'); axis tight, axis square
@@ -40,11 +44,4 @@ tic; idx = kmeans(V1, size(V1,2),'Replicates',10);  toc         % kmeans cluster
 figure(3); clf; surf(X1,Y1,reshape(idx,n1,n1)); view(2); shading flat
 axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
 colormap(50*[ 1 1 1; 2 2 2; 3 3 3; 4 4 4]/255);
-
-%% plot CG tensor
-figure(4); clf
-trisurf(t,p(:,1),p(:,2),zeros(size(p,1),1),log10(abs(G(:,1)+G(:,3)))); shading flat
-view(2); axis([0 1 0 1]); axis equal; axis tight; caxis([0,4]); colormap jet; 
-c = logspace(0,4,5); cbar = colorbar('YTick',log10(c),'YTickLabel',c);
-
 

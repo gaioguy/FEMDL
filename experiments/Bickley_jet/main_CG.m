@@ -1,24 +1,25 @@
 addpath('../../src','../../src/2d'); clear all; 
-cols = @(A,I) A(:,I);
+cols = @(A,I) A(:,I);                       
+at_tf = @(A) squeeze(A(:,:,end,:));
 
 %% flow map 
-t0 = 0; days = 60*60*24; tf = 40*days; nt = 2; 
-tspan = linspace(t0,tf,nt);
-CG = @(x) inv_CG(@bickleyjet,x,tspan);
+t0 = 0; days = 60*60*24; tf = 40*days; 
+vf = @bickleyjet;
+DT  = @(x) at_tf(Dflow_map(vf,x,[t0 tf]));  % space derivative of flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplace
+DLx = @(x) fapply1(DL, DT(x));              % evaluate DL at each row of x
 
-%% nodes
+%% triangulation
 nx = 100;  ny = floor(nx/20*6);  n = nx*ny;
 [X,Y] = meshgrid(linspace(0,20,nx),linspace(-3,3,ny)); 
 p = [X(:) Y(:)];
-pb = [1:n; [1:((nx-1)*ny), 1:ny]]';             % boundary periodic in x
-
-%% triangulation
+pb = [1:n; [1:((nx-1)*ny), 1:ny]]';         % boundary periodic in x
 t = delaunay(p); 
 
 %% assembly
-deg = 2;                                        % degree of quadrature
-tic; G = inv_CG_quad(p,t,CG,deg); toc
-tic; [D,M] = assemble(p,t,pb,G); toc
+deg = 2;                                    % degree of quadrature
+tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
+tic; [D,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
 
 %% solve eigenproblem
 tic; [V,L] = eigs(D,M,15,'SM'); toc
@@ -46,7 +47,7 @@ axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
 
 %% advect abd plot LCS
 figure(4); clf; hold on; caxis([1 nc])
-T = @(x) cols(flow_map(@bickleyjet,x,tspan),[2,4]);
+T = @(x) cols(flow_map(@bickleyjet,x,[t0 tf]),[2,4]);
 for l = 2:nc
     I = find(idx==l); 
     S = [X1(I) Y1(I)]; 

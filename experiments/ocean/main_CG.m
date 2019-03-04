@@ -1,4 +1,5 @@
 addpath('../../src','../../src/2d'); clear all; clc; colormap jet
+at_tf = @(A) squeeze(A(:,:,end,:));
 
 %% ocean vector field
 % The altimeter data are produced by SSALTO/DUACS and distributed by 
@@ -10,25 +11,24 @@ V = griddedInterpolant({lon,lat,time},permute(VT,[2,1,3]),'cubic','none');
 %% flow
 vf = @(t,x) ocean(t,x,U,V);
 t0 = time(1); tf = t0 + 90; 
-nt = 2; tspan = linspace(t0,tf,nt);
-CG = @(x) inv_CG(vf,x,tspan);
+DT  = @(x) at_tf(Dflow_map(vf,x,[t0 tf]));  % space derivative of flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplace
+DLx = @(x) fapply1(DL, DT(x));              % evaluate DL at each row of x
 
 %% triangulation
 xmin = -4; xmax = 6; ymin = -34; ymax = -28; 
 nx = 200; ny = 0.6*nx; n = nx*ny;
 x1 = linspace(xmin,xmax,nx); y1 = linspace(ymin,ymax,ny);
-[X,Y] = meshgrid(x1,y1); p = [X(:) Y(:)];           % nodes
-pb = [1:n; 1:n]';                                   % no periodic boundary
-
-%% triangulation
+[X,Y] = meshgrid(x1,y1); p = [X(:) Y(:)];   % nodes
+pb = [1:n; 1:n]';                           % non-periodic boundary
 tri = delaunayTriangulation(p); 
 t = tri.ConnectivityList; 
-b = unique(freeBoundary(tri));                      % b = boundary nodes
+b = unique(freeBoundary(tri));              % boundary nodes
 
 %% assembly 
-deg = 2;                                            % degree of quadrature
-tic; G = inv_CG_quad(p,t,CG,deg); toc
-tic; [D,M] = assemble(p,t,pb,G); toc
+deg = 2;                                    % degree of quadrature
+tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
+tic; [D,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
 
 %% Dirichlet boundary condition
 D(b,:) = 0; D(:,b) = 0; M(b,:) = 0; M(:,b) = 0;
@@ -61,7 +61,7 @@ load cmap7; colormap(cmap); colorbar
 
 %% advect abd plot LCS
 figure(4); clf; hold on; colormap(cmap); caxis([1 nc])
-T = @(x) flow_map(vf,x,tspan);
+T = @(x) flow_map(vf,x,[t0 tf]);
 for l = 2:nc
     I = find(idx==l); 
     S = [X1(I) Y1(I)];

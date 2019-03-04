@@ -13,8 +13,10 @@ function fx = eval_P2(p,t,f_P2,x)
 
 elem2dof = dofP2(t);
 tr = triangulation(t,p);
-id = pointLocation(tr,x);
-size(find(isnan(id)))
+id = pointLocation(tr,x); 
+%I = find(isnan(id)), x(I,:), id(I)
+%id = pointLocation(tr,x(I,:)) 
+
 lam = cartesianToBarycentric(tr,id,x);
 
 phi(:,1) = lam(:,1).*(2*lam(:,1)-1);
