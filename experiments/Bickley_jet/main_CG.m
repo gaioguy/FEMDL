@@ -1,5 +1,5 @@
 addpath('../../src','../../src/2d'); clear all; 
-cols = @(A,I) A(:,I);                       
+cols = @(A,I) A(:,I);
 at_tf = @(A) squeeze(A(:,:,end,:));
 
 %% flow map 
@@ -17,9 +17,9 @@ pb = [1:n; [1:((nx-1)*ny), 1:ny]]';         % boundary periodic in x
 t = delaunay(p); 
 
 %% assembly
-deg = 2;                                    % degree of quadrature
+deg = 1;                                    % degree of quadrature
 tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
-tic; [D,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
+tic; [D,M] = assemble2(p,t,pb,A); toc        % assemble stiffness and mass matrices
 
 %% solve eigenproblem
 tic; [V,L] = eigs(D,M,15,'SM'); toc
@@ -47,7 +47,7 @@ axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
 
 %% advect abd plot LCS
 figure(4); clf; hold on; caxis([1 nc])
-T = @(x) cols(flow_map(@bickleyjet,x,[t0 tf]),[2,4]);
+T = @(x) at_tf(flowmap(@bickleyjet,x,[t0 tf]));
 for l = 2:nc
     I = find(idx==l); 
     S = [X1(I) Y1(I)]; 

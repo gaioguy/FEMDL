@@ -1,12 +1,12 @@
-addpath('../../src/2d'); clear all; colormap jet; 
+addpath('../../src','../../src/2d'); clear all; colormap jet; 
 at_tf = @(A) squeeze(A(:,:,end,:));
 
-%% rotating double gyre map 
+%% rotating double gyre 
 t0 = 0; tf = 1; 
 vf = @double_gyre;
-DT  = @(x) at_tf(Dflow_map(vf,x,[t0 tf]));  % space derivative of flow map
-DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplace
-DLx = @(x) fapply1(DL, DT(x));              % evaluate DL at each row of x
+DT  = @(x) at_tf(Dflow_map(vf, x, [t0 tf]));    % space derivative of flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)');     % dynamic Laplacian
+DLx = @(x) fapply1(DL, DT(x));                  % evaluate DL at each row of x
 
 %% triangulation
 n = 25; x = linspace(0,1,n);
@@ -25,7 +25,7 @@ tic; [V,L] = eigs(D,M,6,'SM'); toc
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
 %% plot spectrum
-figure(1); plot(lam,'*'); axis tight, axis square
+figure(1); clf; plot(lam,'*'); axis tight, axis square
 xlabel('$k$'); ylabel('$\lambda_k$');
 
 %% plot eigenvector

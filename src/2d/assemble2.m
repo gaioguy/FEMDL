@@ -26,7 +26,8 @@ for i = 1:3
                     + dphi(:,2,i).*PG(:,2,1).*dphi(:,1,j) ...
                     + dphi(:,2,i).*PG(:,2,2).*dphi(:,2,j));
         Mij = area/12.*ones(size(dphi,1),1);
-        I = pb(t(:,i),2); J = pb(t(:,j),2);
+        I = pb(t(:,i),2); 
+        J = pb(t(:,j),2);
         if (j==i)
             D = D + sparse(I,J,Dij,n,n);
             M = M + sparse(I,J,Mij+area/12,n,n);

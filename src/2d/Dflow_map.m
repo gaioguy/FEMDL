@@ -14,7 +14,7 @@ function DT = Dflow_map(v,x,tspan)
 % (C) 2018 by O. Junge, see COPYRIGHT 
 
 xi = x(:,1); yi = x(:,2);
-rho.x = 1e-8; rho.y = rho.x;
+rho.x = sqrt(eps); rho.y = rho.x;
 
 q = numel(tspan);
 m = numel(xi);
@@ -29,8 +29,8 @@ end
 %% Time integration
 [xt,yt] = integrator(v,xt(:),yt(:),tspan);
 
-xt = reshape(xt,q, m, Nrad);
-yt = reshape(yt,q, m, Nrad);
+xt = reshape(xt, q, m, Nrad);
+yt = reshape(yt, q, m, Nrad);
 
 %% finite-differencing on a time-space grid
 DT = zeros(2,2,q,m);
