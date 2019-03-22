@@ -1,13 +1,14 @@
 addpath('../../src','../../src/2d'); clear all; 
-cols = @(A,I) A(:,I);
 at_tf = @(A) squeeze(A(:,:,end,:));
+dD = @(f,x,d) imag(f(x + i*eps*d).')/eps;                        % derivative of f at x in direction d
+D = @(f,x) permute(cat(3,dD(f,x,[1,0]),dD(f,x,[0,1])),[1 3 2]);  % Jacobi matrix of f at x
 
 %% flow map 
 t0 = 0; days = 60*60*24; tf = 40*days; 
 vf = @bickleyjet;
-DT  = @(x) at_tf(Dflow_map(vf,x,[t0 tf]));  % space derivative of flow map
-DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplace
-DLx = @(x) fapply1(DL, DT(x));              % evaluate DL at each row of x
+T  = @(x) at_tf(flowmap(vf, x, [t0 tf]));    % flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)');  % dynamic Laplace
+DLx = @(x) fapply1(DL, D(T,x));              % evaluate DL at each row of x
 
 %% triangulation
 nx = 100;  ny = floor(nx/20*6);  n = nx*ny;
@@ -19,10 +20,10 @@ t = delaunay(p);
 %% assembly
 deg = 1;                                    % degree of quadrature
 tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
-tic; [D,M] = assemble2(p,t,pb,A); toc        % assemble stiffness and mass matrices
+tic; [K,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
 
 %% solve eigenproblem
-tic; [V,L] = eigs(D,M,15,'SM'); toc
+tic; [V,L] = eigs(K,M,15,'SM'); toc
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
 %% plot spectrum
@@ -47,7 +48,6 @@ axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
 
 %% advect abd plot LCS
 figure(4); clf; hold on; caxis([1 nc])
-T = @(x) at_tf(flowmap(@bickleyjet,x,[t0 tf]));
 for l = 2:nc
     I = find(idx==l); 
     S = [X1(I) Y1(I)]; 
