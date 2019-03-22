@@ -1,10 +1,8 @@
-function mesh = mesh(ll, ur, ns, type, top)
+function m = trimesh(nx, ny, type)
 
-xmin = ll(1); xmax = ur(1);
-ymin = ll(2); ymax = ur(2);
-nx = ns(1); ny = ns(2); n = nx*ny;
+n = nx*ny;
 
-if type=='uniform'
+if type=='grid'
     x1 = linspace(xmin,xmax,nx); 
     y1 = linspace(ymin,ymax,ny);
     [X,Y] = meshgrid(x1,y1); 
@@ -25,7 +23,7 @@ Tri = alphaShape(p(:,1),p(:,2));
 t = alphaTriangulation(Tri);
 b = unique(boundaryFacets(Tri));
 
-mesh.p = p;
-mesh.t = t;
-mesh.b = b;
-mesh.pb = pb;
+m.p = p;
+m.t = t;
+m.b = b;
+m.pb = pb;
