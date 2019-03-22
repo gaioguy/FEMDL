@@ -1,73 +1,52 @@
-addpath('../../src','../../src/2d'); clear all; clc; colormap jet
-at_tf = @(A) squeeze(A(:,:,end,:));
+addpath('../../src/2d'); init
+h = 1e-4;
+df = @(f,x,d) (f(x+h*d)-f(x-h*d)).'/(2*h);      % derivative of f at x in direction d
+D = @(f,x) permute(cat(3,df(f,x,[1,0]),df(f,x,[0,1])),[1 3 2]); 
 
 %% ocean vector field
-% The altimeter data are produced by SSALTO/DUACS and distributed by 
-% AVISO, (http://www.aviso.oceanobs.com/duacs).
+% data by SSALTO/DUACS, distributed by AVISO, http://www.aviso.oceanobs.com/duacs
 load('Ocean_geostrophic_velocity.mat','lon','lat','UT','VT','time');
 UI = griddedInterpolant({lon,lat,time},permute(UT,[2,1,3]),'cubic','none');
 VI = griddedInterpolant({lon,lat,time},permute(VT,[2,1,3]),'cubic','none');
+v = @(t,x) ocean(t,x,UI,VI);
 
-%% flow
+%% flow 
 t0 = time(1); tf = t0 + 90; 
-vf = @(t,x) ocean(t,x,UI,VI);
+T = @(x) at_tf(flowmap(v,x,[t0 tf],1e-6));      % flow map at final time
+DT = @(x) D(T,x);                               % space derivative of flow map
+
 DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)');     % dynamic Laplace
-DT  = @(x) at_tf(Dflow_map(vf, x, [t0 tf]));    % space derivative of flow map
-DLx = @(x) fapply1(DL, DT(x));                  % evaluate DL at each row of x
+DLx = @(x) fapply1(DL, D(T,x));                 % evaluate DL at each row of x
 
 %% triangulation
-xmin = -4; xmax = 6; ymin = -34; ymax = -28; 
-nx = 250; ny = 0.6*nx; n = nx*ny;
-x1 = linspace(xmin,xmax,nx); y1 = linspace(ymin,ymax,ny);
-[X,Y] = meshgrid(x1,y1); p = [X(:) Y(:)];   % nodes
-pb = [1:n; 1:n]';                           % non-periodic boundary
-tri = delaunayTriangulation(p); 
-t = tri.ConnectivityList; 
-b = unique(freeBoundary(tri));              % boundary nodes
+dom = [-4 -34; 6 -28]; dx = diff(dom);          % domain 
+n = 200; m = dx(2)/dx(1)*n;                     % number of grid points
+g = grid2(n,m)*diag(dx) + dom(1,:);             % grid 
+[p,t,pb,b] = trimesh(g);                        % triangular mesh
 
 %% assembly 
-deg = 1;                                    % degree of quadrature
-tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
-tic; [K,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
-
-%% Dirichlet boundary condition
-K(b,:) = 0; K(:,b) = 0; M(b,:) = 0; M(:,b) = 0;
-K(b,b) = speye(length(b),length(b));
+deg = 1;                                        % degree of quadrature
+A = triquad(p,t,DLx,deg);                       % integrate DL on triangles
+[K,M] = assemble2(p,t,pb,A);                    % assemble stiffness and mass matrices
+K(b,:) = 0; K(:,b) = 0; M(b,:) = 0; M(:,b) = 0; % Dirichlet bc
+K(b,b) = speye(length(b),length(b));           
 
 %% eigenproblem
-tic; [V,L] = eigs(K,M,10,'SM'); toc
+[V,L] = eigs(K,M,10,'SM'); 
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord); 
 
-%% plot spectrum
-figure(1); clf; plot(lam,'*'); axis square, axis tight
-xlabel('$k$'); ylabel('$\lambda_k$')
+figure(1); plot(lam,'*'); 
+figure(2); plotf(p,t,pb,normed(V(:,3)),0); colorbar
 
-%% plot eigenvector
-figure(2), clf; plotf(p,t,pb,normed(V(:,2)),0); colorbar
-xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
+%% coherent partition
+nc = 4;                                         % number of clusters
+W = kmeans(V(:,1:nc),nc,'Replicates',20);       % kmeans clustering
+figure(3); scatter(g(:,1),g(:,2),10,W,'filled');
+axis equal; axis tight; colormap(jet(nc));
 
-%% compute partition
-nx1 = 200; ny1 = 0.6*nx1; 
-x1 = linspace(xmin,xmax,nx1); y1 = linspace(ymin,ymax,ny1);
-[X1,Y1] = meshgrid(x1,y1); 
-nc = 4;
-tic; V1 = eval_p1(p,V(:,1:nc),[X1(:) Y1(:)]); toc    % evaluate eigenvectors on grid
-tic; idx = kmeans(V1,nc,'Replicates',10); toc       % kmeans clustering
+%% advected partition
+Tg = T(g);                                      % advect grid
+figure(4); scatter(Tg(:,1),Tg(:,2),10,W,'filled'); 
+axis equal; axis([-12 4 -34 -25]); colormap(jet(nc));
 
-%% plot partition
-figure(3); clf; surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
-axis equal; axis tight; xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]'); 
-load cmap3; colormap(cmap); colorbar
-
-%% advect abd plot LCS
-figure(4); clf; hold on; colormap(cmap); caxis([1 nc])
-T  = @(x) at_tf(flowmap(vf, x, [t0 tf]));    % flow map
-for l = 2:nc
-    I = find(idx==l); 
-    S = [X1(I) Y1(I)];
-    TS = T(S); 
-    scatter3(TS(:,1),TS(:,2),zeros(length(I),1),10,cmap(l,:),'filled'); 
-end
-view(2); axis equal; axis([-8 2 -33 -27]); colorbar
-xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');
 
