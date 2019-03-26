@@ -7,7 +7,7 @@ function V = eval_p1(p,v,x)
 %   p: (n x 2), one node per row
 %   v: (n x j), j function values on each node 
 %   x: (m x 2). points, on which the functions are to be evaluated
-% V(:,j) are the values of v(:,j) in the points x
+%   V(:,j) are the values of v(:,j) in the points x
 %
 % (C) 2017 by O. Junge and G. Froyland, see COPYRIGHT 
 

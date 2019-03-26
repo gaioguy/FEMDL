@@ -1,4 +1,4 @@
-function dx = ocean_vf(t,x,U,V)
+function dx = ocean(t,x,U,V)
 
 n = numel(x)/2;
 dx = zeros(2*n,1);

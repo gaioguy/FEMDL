@@ -1,47 +1,37 @@
-addpath('../../src','../../src/2d'); clear all; colormap jet; 
-at_tf = @(A) squeeze(A(:,:,end,:));
+addpath('../../src/2d'); init
 
-%% rotating double gyre 
+%% rotating double gyre map 
 t0 = 0; tf = 1; 
-vf = @double_gyre;
-DT  = @(x) at_tf(Dflow_map(vf, x, [t0 tf]));    % space derivative of flow map
-DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)');     % dynamic Laplacian
-DLx = @(x) fapply1(DL, DT(x));                  % evaluate DL at each row of x
+v = @double_gyre;
+T = @(x) at_tf(flowmap(v, x, [t0 tf]));             % flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)');         % dynamic Laplacian
+DLx = @(x) fapply1(DL, D(T,x));                     % evaluate DL at each row of x
 
 %% triangulation
-n = 25; x = linspace(0,1,n);
-[X,Y] = meshgrid(x,x); p = [X(:) Y(:)];     % nodes
-% p = rand(n^2,2);                          % for Fig. 3
-pb = [1:n^2; 1:n^2]';                       % nonperiodic boundary
-t = delaunay(p);                            % t is m by 3 matrix of triangles
+n = 50; 
+[p,t,pb,b] = trimesh(grid2(n,n)); b = []; 
 
 %% assembly 
-deg = 2;                                    % degree of quadrature
-tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
-tic; [D,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
+deg = 2;                                            % degree of quadrature
+A = triquad(p,t,DLx,deg);                           % integrate DL on triangles
+[K,M] = assemble2(p,t,pb,A);                        % assemble stiffness and mass matrices
 
-%% solve eigenproblem
-tic; [V,L] = eigs(D,M,6,'SM'); toc
+%% eigenproblem
+[V,L] = eigs(K,M,6,'SM'); 
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
 
-%% plot spectrum
-figure(1); clf; plot(lam,'*'); axis tight, axis square
-xlabel('$k$'); ylabel('$\lambda_k$');
+figure(1); clf; plot(lam,'*'); 
+figure(2); clf; plotf(p,t,pb,normed(V(:,2)),0); colorbar; 
 
-%% plot eigenvector
-figure(2); clf; w = V(:,2); 
-plotf(p,t,pb,w/norm(w),1); 
-axis([0 1 0 1]); colorbar; 
-xlabel('$x$'); ylabel('$y$');
+%% coherent partition
+nc = 3;                                             % number of clusters
+W = kmeans(V(:,1:nc),nc,'Replicates',20);           % kmeans clustering
+figure(3); clf; scatter(p(:,1),p(:,2),30,W,'filled');
+axis equal; axis tight; colormap(jet(nc));
 
-%% compute partition
-n1 = 200; x1 = linspace(0,1,n1); 
-[X1,Y1] = meshgrid(x1,x1); 
-tic; V1 = eval_p1(p,V(:,1:4),[X1(:) Y1(:)]);  toc   % evaluate eigenvectors on grid
-tic; idx = kmeans(V1, size(V1,2),'Replicates',10);  toc         % kmeans clustering
+%% advected partition
+Tp = T(p);                                          % advect grid
+figure(4); clf; scatter(Tp(:,1),Tp(:,2),30,W,'filled'); 
+axis equal; colormap(jet(nc));
 
-%% plot partition
-figure(3); clf; surf(X1,Y1,reshape(idx,n1,n1)); view(2); shading flat
-axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
-colormap(50*[ 1 1 1; 2 2 2; 3 3 3; 4 4 4]/255);
 

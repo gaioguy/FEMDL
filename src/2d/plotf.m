@@ -11,6 +11,7 @@ function plotf(p,t,pb,f,mesh)
 %
 % (C) 2017 by O. Junge and G. Froyland, see COPYRIGHT 
 
+clf;
 w(pb(:,1)) = f(pb(:,2)); 
 trisurf(t,p(:,1),p(:,2),zeros(size(p,1),1),w);  
 shading interp;

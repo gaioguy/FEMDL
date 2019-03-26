@@ -1,4 +1,4 @@
-function [D,M] = assemble2(p,t,pb,G)
+function [K,M] = assemble2(p,t,pb,G)
 
 %% ASSEMBLE stiffness and mass matrices
 %
@@ -15,13 +15,11 @@ function [D,M] = assemble2(p,t,pb,G)
 
 n = max(pb(:,2)); m = size(t,1);
 [dphi,area] = gradbasis(p,t);
-
-% assembly
 PG = permute(G,[3 1 2]);
-D = sparse(n,n); M = sparse(n,n);
+K = sparse(n,n); M = sparse(n,n);
 for i = 1:3
     for j = i:3
-        Dij = -area.*(dphi(:,1,i).*PG(:,1,1).*dphi(:,1,j) ...
+        Kij = -area.*(dphi(:,1,i).*PG(:,1,1).*dphi(:,1,j) ...
                     + dphi(:,1,i).*PG(:,1,2).*dphi(:,2,j) ...
                     + dphi(:,2,i).*PG(:,2,1).*dphi(:,1,j) ...
                     + dphi(:,2,i).*PG(:,2,2).*dphi(:,2,j));
@@ -29,10 +27,10 @@ for i = 1:3
         I = pb(t(:,i),2); 
         J = pb(t(:,j),2);
         if (j==i)
-            D = D + sparse(I,J,Dij,n,n);
+            K = K + sparse(I,J,Kij,n,n);
             M = M + sparse(I,J,Mij+area/12,n,n);
         else
-            D = D + sparse([I;J],[J;I],[Dij; Dij],n,n);   
+            K = K + sparse([I;J],[J;I],[Kij; Kij],n,n);   
             M = M + sparse([I;J],[J;I],[Mij; Mij],n,n);
         end        
     end

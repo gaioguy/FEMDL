@@ -1,4 +1,4 @@
-function DT = Dflow_map(v,x,tspan)
+function DT = Dflow_map(v,x,tspan,tol)
 
 %% DFLOW_MAP compute Jacobi matrices of flow map by finite differencing
 %
@@ -13,8 +13,9 @@ function DT = Dflow_map(v,x,tspan)
 %
 % (C) 2018 by O. Junge, see COPYRIGHT 
 
+
 xi = x(:,1); yi = x(:,2);
-rho.x = sqrt(eps); rho.y = rho.x;
+rho.x = 1e-4; rho.y = rho.x;
 
 q = numel(tspan);
 m = numel(xi);
@@ -27,7 +28,10 @@ for k = 1:Nrad
 end
 
 %% Time integration
-[xt,yt] = integrator(v,xt(:),yt(:),tspan);
+if nargin < 4
+    tol = 1e-3;
+end
+[xt,yt] = integrator(v,xt(:),yt(:),tspan,tol);
 
 xt = reshape(xt, q, m, Nrad);
 yt = reshape(yt, q, m, Nrad);

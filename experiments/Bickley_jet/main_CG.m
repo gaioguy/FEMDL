@@ -1,60 +1,39 @@
-addpath('../../src','../../src/2d'); clear all; 
-at_tf = @(A) squeeze(A(:,:,end,:));
-dD = @(f,x,d) imag(f(x + i*eps*d).')/eps;                        % derivative of f at x in direction d
-D = @(f,x) permute(cat(3,dD(f,x,[1,0]),dD(f,x,[0,1])),[1 3 2]);  % Jacobi matrix of f at x
+addpath('../../src/2d'); init
+xmod20 = @(x) [mod(x(:,1),20) x(:,2)];
 
 %% flow map 
 t0 = 0; days = 60*60*24; tf = 40*days; 
-vf = @bickleyjet;
-T  = @(x) at_tf(flowmap(vf, x, [t0 tf]));    % flow map
-DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)');  % dynamic Laplace
-DLx = @(x) fapply1(DL, D(T,x));              % evaluate DL at each row of x
+v = @bickleyjet;
+T = @(x) at_tf(flowmap(v, x, [t0 tf]));     % flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplace
+DLx = @(x) fapply1(DL, D(T,x));             % evaluate DL at each row of x
 
 %% triangulation
-nx = 100;  ny = floor(nx/20*6);  n = nx*ny;
-[X,Y] = meshgrid(linspace(0,20,nx),linspace(-3,3,ny)); 
-p = [X(:) Y(:)];
-pb = [1:n; [1:((nx-1)*ny), 1:ny]]';         % boundary periodic in x
-t = delaunay(p); 
+dom = [0 -3; 20 3]; dx = diff(dom);         % domain 
+nx = 100; ny = dx(2)/dx(1)*nx;              % number of grid points
+p = grid2(nx,ny)*diag(dx) + dom(1,:);       % grid 
+[p,t,pb] = delaunay_C2(p, dx(1));
 
 %% assembly
 deg = 1;                                    % degree of quadrature
-tic; A = triquad(p,t,DLx,deg); toc          % integrate DL on triangles
-tic; [K,M] = assemble2(p,t,pb,A); toc       % assemble stiffness and mass matrices
+A = triquad(p,t,DLx,deg);                   % integrate DL on triangles
+[K,M] = assemble2(p,t,pb,A);                % assemble stiffness and mass matrices
 
-%% solve eigenproblem
-tic; [V,L] = eigs(K,M,15,'SM'); toc
+%% eigenproblem
+[V,L] = eigs(K,M,15,'SM');
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);
+figure(1); clf; plot(lam,'*')
+figure(2), plotf(p,t,pb,normed(V(:,3)),0); colorbar
 
-%% plot spectrum
-figure(1); clf; plot(lam,'*'); axis tight, axis square
-xlabel('$k$'); ylabel('$\lambda_k$')
+%% coherent partition
+nc = 8;                                         % number of clusters
+W = kmeans(V(pb(:,2),1:nc),nc,'Replicates',20); % kmeans clustering
+figure(3); clf; scatter(p(:,1),p(:,2),10,W,'filled');
+axis equal; axis tight; colormap(jet(nc));
 
-%% plot eigenvector
-figure(2), plotf(p,t,pb,normed(V(:,3)),0); caxis([-1,1]); colorbar
-ylabel('$y$');  xlabel('$x$'); 
-
-%% compute partition
-nx1 = 400; ny1 = nx1/20*6; x1 = linspace(0,20,nx1); y1 = linspace(-3,3,ny1);
-[X1,Y1] = meshgrid(x1,y1); 
-nc = 8;
-V1 = eval_p1(p,V(pb(:,2),1:nc),[X1(:) Y1(:)]);       % evaluate eigenvectors on grid
-idx = kmeans(V1, size(V1,2),'Replicates',10);       % kmeans clustering
-
-%% plot partition
-figure(3); clf; 
-surf(X1,Y1,reshape(idx,ny1,nx1)); view(2); shading flat
-axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
-
-%% advect abd plot LCS
-figure(4); clf; hold on; caxis([1 nc])
-for l = 2:nc
-    I = find(idx==l); 
-    S = [X1(I) Y1(I)]; 
-    TS = T(S); TS(:,1) = mod(TS(:,1),20);
-    scatter(TS(:,1),TS(:,2),10,'filled'); 
-end
-view(2); axis equal; axis([0 20 -3 3]); 
-xlabel('lon [$^\circ$]'); ylabel('lat [$^\circ$]');
+%% advected partition
+Tp = xmod20(T(p));                                      % advect grid
+figure(4); clf; scatter(Tp(:,1),Tp(:,2),10,W,'filled'); 
+axis equal; axis(dom(:)); colormap(jet(nc));
 
 

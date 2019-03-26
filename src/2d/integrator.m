@@ -1,6 +1,9 @@
-function [xt,yt] = integrator(v,x0,y0,tspan)
+function [xt,yt] = integrator(v,x0,y0,tspan,tol)
 
-options = odeset('RelTol',1e-3,'AbsTol',1e-3);
+if nargin < 4
+    tol = 1e-3;
+end
+options = odeset('RelTol',tol,'AbsTol',tol);
 
 [~,F] = ode45(v,tspan,[x0(:);y0(:)],options);
 

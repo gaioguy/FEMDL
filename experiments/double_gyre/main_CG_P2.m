@@ -1,12 +1,14 @@
 addpath('../../src/2d');  clear all
 at_tf = @(A) squeeze(A(:,:,end,:));
+dD = @(f,x,d) imag(f(x + i*eps*d).')/eps;                       % derivative of f at x in direction d
+D = @(f,x) permute(cat(3,dD(f,x,[1,0]),dD(f,x,[0,1])),[1 3 2]); % Jacobi matrices of f at the rows of x
 
 %% rotating double gyre map 
 t0 = 0; tf = 1; 
 vf = @double_gyre;
-DT  = @(x) at_tf(Dflow_map(vf,x,[t0 tf]));  % space derivative of flow map
-DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplace
-DLx = @(x) fapply1(DL, DT(x));              % evaluate DL at each row of x
+T  = @(x) at_tf(flowmap(vf, x, [t0 tf]));   % flow map
+DL = @(DT) 0.5*(eye(2) + inv(DT)*inv(DT)'); % dynamic Laplacian
+DLx = @(x) fapply1(DL, D(T,x));             % evaluate DL at each row of x
 
 %% triangulation
 n = 20; x = linspace(0,1,n);
@@ -25,8 +27,8 @@ tic; [D,M] = assemble_P2(p,t,pb,A); toc     % assemble stiffness and mass matric
 
 %% plot eigenvector
 n1 = 202; x1 = linspace(0,1,n1); [X1,Y1] = meshgrid(x1,x1); 
-W = eval_P2(p,t,V(:,1:3),[X1(:) Y1(:)]);
-w = W(:,2)/norm(W(:,2),inf);
+W = eval_P2(p,t,V(:,1:4),[X1(:) Y1(:)]);
+w = normed(W(:,3));
 figure(2); clf; surf(X1,Y1, reshape(w,n1,n1)); shading flat; view(2)
 axis([0 1 0 1]); colorbar; xlabel('$x$'); ylabel('$y$');
 axis square, caxis([-1,1])

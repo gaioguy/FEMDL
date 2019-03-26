@@ -1,64 +1,44 @@
-addpath('../../src/2d'); clear all; colormap jet; clc
+addpath('../../src/2d'); init
 
 %% flow map
 t0 = 0; tf = 1; nt = 6; tspan = linspace(t0,tf,nt); 
-T = @(x) flowmap(@double_gyre,x,tspan);
+v = @double_gyre;
+T = @(x) flowmap(v,x,tspan);
 
 %% data points
-n = 25; x = linspace(0,1,n);                            
-[X,Y] = meshgrid(x,x); 
-p(:,:,1) = [X(:) Y(:)];
-% p(:,:,1) = rand(n^2,2); 
-% load p_Meiss
-% p1 = rand(20000,2)*diag([1, 0.5])+ones(20000,2)*diag([0 0.5]);
-% p2 = rand(200,2)*diag([1, 0.5]);
-% p(:,:,1) = [p1; p2]; n = size(p,1);
-pb = [1:n^2; 1:n^2]';
-
-%% time integration
-tic; p = T(p(:,:,1)); toc
+nx = 50; ny = nx; n = nx*ny;
+p(:,:,1) = grid2(nx,ny); pb = [1:n; 1:n]';
 
 %% assembly (for missing data case)
-tic; pm = 1;                                % percentage of nodes to remove
-pm = 0.4;                                   % for missing data case
-D = sparse(n^2,n^2); M = sparse(n^2,n^2); 
+p = T(p(:,:,1));                                % time integration
+pm = 1;                                         % percentage of nodes to remove
+%pm = 0.4;                                       % for missing data case
+K = sparse(n,n); M = sparse(n,n); 
 for k = 1:nt
-    r = randperm(n^2,floor(pm*n^2))'; 
-    tr = delaunay(p(r,:,k)); 
-    t = [r(tr(:,1)), r(tr(:,2)), r(tr(:,3))];
-    A = kron([1 0 1],ones(size(t,1),1));      % 2 x 2 identity matrix
-    [Dt{k},Mt{k}] = assemble(p(:,:,k),t,pb,A); 
-    D = D + Dt{k};  M = M + Mt{k}; 
+    r = randperm(n,floor(pm*n))'; 
+    [~,tr] = trimesh(p(r,:,k)); 
+    I = repmat(eye(2),[1 1 size(tr,1)]);        % identity matrix
+    [Kt,Mt] = assemble2(p(:,:,k),r(tr),pb,I); 
+    K = K + Kt;  M = M + Mt; 
 end;
-toc
-
-%% remove all zero rows and columns
-S = sum(abs(D));
-I = find(abs(S)>eps);
-D = D(I,I); M = M(I,I); pI = p(I,:,1); pbI = [1:size(pI,1); 1:size(pI,1)]';
+% remove all zero rows and columns
+S = sum(abs(K)); I = find(abs(S)>eps); K = K(I,I); M = M(I,I); 
 
 %% solve eigenproblem
-I = speye(size(D));
-tic; [V,L] = eigs(D,M,10,'SM'); toc
+[V,L] = eigs(K,M,10,'SM'); 
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord); 
 
-%% plot spectrum
-figure(1); plot(lam,'*'); axis tight, axis square
-xlabel('$k$'); ylabel('$\lambda_k$');
+figure(1); plot(lam,'*');
+[pI,tI,pbI] = trimesh(p(I,:,1));
+figure(2), clf; plotf(pI,tI,pbI,normed(V(:,2)),0); colorbar
 
-%% plot eigenvector
-figure(2), clf; tI = delaunayn(pI); 
-w = V(:,3);
-plotf(pI,tI,pbI,w/norm(w),1); axis([0 1 0 1]); colorbar
-xlabel('$x$'); ylabel('$y$');
+%% coherent partition
+nc = 3;                                             % number of clusters
+W = kmeans(V(:,1:nc),nc,'Replicates',20);           % kmeans clustering
+figure(3); clf; scatter(p(:,1,1),p(:,2,1),30,W,'filled');
+axis equal; axis tight; colormap(jet(nc));
 
-%% compute partition
-n1 = 200; x1 = linspace(0,1,n1); [X1,Y1] = meshgrid(x1,x1); 
-W = eval_p1(pI,V(:,1:3),[X1(:) Y1(:)]);       % evaluate eigenvectors on grid
-idx = kmeans(W, size(W,2));                     % kmeans clustering
-
-%% plot partition
-figure(3); clf; surf(X1,Y1,reshape(idx,n1,n1)); view(2); shading flat
-axis equal; axis tight; xlabel('$x$'); ylabel('$y$'); colorbar
-colormap(70*[ 1 1 1; 2 2 2; 3 3 3]/255);
+%% advected partition
+figure(4); clf; scatter(p(:,1,nt),p(:,2,nt),30,W,'filled'); 
+axis equal; colormap(jet(nc));
 
