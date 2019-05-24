@@ -22,12 +22,13 @@ DLx = @(x) fapply1(DL, D(T,x));                 % evaluate DL at each row of x
 dom = [-4 -34; 6 -28]; dx = diff(dom);          % domain 
 n = 200; m = dx(2)/dx(1)*n;                     % number of grid points
 g = grid2(n,m)*diag(dx) + dom(1,:);             % grid 
-[p,t,pb,b] = trimesh(g);                        % triangular mesh
+m = trimesh(g);                                 % triangular mesh
 
 %% assembly 
 deg = 1;                                        % degree of quadrature
-A = triquad(p,t,DLx,deg);                       % integrate DL on triangles
-[K,M] = assemble2(p,t,pb,A);                    % assemble stiffness and mass matrices
+A = triquad(m,DLx,deg);                         % integrate DL on triangles
+[K,M] = assemble2(m,A);                         % assemble stiffness and mass matrices
+b = m.b; 
 K(b,:) = 0; K(:,b) = 0; M(b,:) = 0; M(:,b) = 0; % Dirichlet bc
 K(b,b) = speye(length(b),length(b));           
 
@@ -36,7 +37,7 @@ K(b,b) = speye(length(b),length(b));
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord); 
 
 figure(1); plot(lam,'*'); 
-figure(2); plotf(p,t,pb,normed(V(:,3)),0); colorbar
+figure(2); plotf(m,normed(V(:,3)),0); colorbar
 
 %% coherent partition
 nc = 4;                                         % number of clusters

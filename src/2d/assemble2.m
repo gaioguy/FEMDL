@@ -1,11 +1,9 @@
-function [K,M] = assemble2(p,t,pb,G)
+function [K,M] = assemble2(mesh,G)
 
 %% ASSEMBLE stiffness and mass matrices
 %
-% [D,M] = ASSEMBLE(p,t,pb,G) computes the stiffness matrix D and the mass matrix M
-%   p: (n x 2), one node per row
-%   t: (m x 3), integers, each row defines a triangle by indexing into p
-%   pb: (n x 2), node pb(i,2) maps to pb(i,1) (for perodic boundaries)
+% [D,M] = ASSEMBLE(mesh,G) computes the stiffness matrix D and the mass matrix M
+%   mesh: triangle mesh as produced by trimesh
 %   G: (2 x 2 x m), where G(:,:,i) defines a symmetric 2x2 matrix on the 
 %      correspondig triangle
 %
@@ -13,10 +11,11 @@ function [K,M] = assemble2(p,t,pb,G)
 %
 % (C) 2017 by O. Junge and G. Froyland, see COPYRIGHT 
 
-n = max(pb(:,2)); m = size(t,1);
+p = mesh.p; t = mesh.t; pb = mesh.pb;
+np = max(pb(:,2)); nt = size(t,1);
 [dphi,area] = gradbasis(p,t);
 PG = permute(G,[3 1 2]);
-K = sparse(n,n); M = sparse(n,n);
+K = sparse(np,np); M = sparse(np,np);
 for i = 1:3
     for j = i:3
         Kij = -area.*(dphi(:,1,i).*PG(:,1,1).*dphi(:,1,j) ...
@@ -27,11 +26,11 @@ for i = 1:3
         I = pb(t(:,i),2); 
         J = pb(t(:,j),2);
         if (j==i)
-            K = K + sparse(I,J,Kij,n,n);
-            M = M + sparse(I,J,Mij+area/12,n,n);
+            K = K + sparse(I,J,Kij,np,np);
+            M = M + sparse(I,J,Mij+area/12,np,np);
         else
-            K = K + sparse([I;J],[J;I],[Kij; Kij],n,n);   
-            M = M + sparse([I;J],[J;I],[Mij; Mij],n,n);
+            K = K + sparse([I;J],[J;I],[Kij; Kij],np,np);   
+            M = M + sparse([I;J],[J;I],[Mij; Mij],np,np);
         end        
     end
 end

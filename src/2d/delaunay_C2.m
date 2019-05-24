@@ -1,15 +1,12 @@
-function [p,t,pb] = delaunay_C2(p0, dx)
+function mesh = delaunay_C2(p0, dx)
 
 %% DELAUNAY_C2 construct Delaunay triangulation on 2d cylinder
 %
-% t = delaunay_C2(p0, dx) constructs a Delaunay triangulation on the 2d flat
+% mesh = delaunay_C2(p0, dx) constructs a Delaunay mesh on the 2d flat
 %   cylinder (i.e. periodic in x-direction)
 %   p0: (n x 2), nodes of the triangulation, one node per row
 %   dx: size of the domain in x-direction
-%   p: (n x 2), nodes of the extended triangulation, one node per row
-%   t: (m3 x 3), triangulation, each row defines one triangle by indexing into p
-%   pb: (n x 2), boundary map on nodes: node no pb(i,2) is identifed with
-%                node no pb(:,1)
+%   mesh: triangle mesh as produced by trimesh
 %
 % (C) 2019 by O. Junge, see COPYRIGHT 
 
@@ -24,9 +21,10 @@ I = find(f1 & f2);                  % triangles with both properties
 t2 = t1(I,:);                       % remove all triangles not in I from triangulation
 J = unique(t2);                     % node numbers appearing in t1
 Jinv(J) = find(J);                  % inverse of J as a map on node numbers
-p = p1(J,:);                        % corresponding nodes
-t = Jinv(t2);
-pb = [1:length(J); pb1(J)]';        % and corresponding map for the boundary nodes
+mesh.p = p1(J,:);                        % corresponding nodes
+mesh.t = Jinv(t2);
+mesh.pb = [1:length(J); pb1(J)]';        % and corresponding map for the boundary nodes
+mesh.b = [];
 
 % scatter(p1(:,1),p1(:,2),100,'filled','b'); hold on
 % triplot(t1,p1(:,1),p1(:,2),'b');

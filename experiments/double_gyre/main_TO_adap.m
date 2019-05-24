@@ -16,9 +16,10 @@ pm = 1;                                         % percentage of nodes to remove
 K = sparse(n,n); M = sparse(n,n); 
 for k = 1:nt
     r = randperm(n,floor(pm*n))'; 
-    [~,tr] = trimesh(p(r,:,k)); 
-    I = repmat(eye(2),[1 1 size(tr,1)]);        % identity matrix
-    [Kt,Mt] = assemble2(p(:,:,k),r(tr),pb,I); 
+    mr = trimesh(p(r,:,k)); 
+    I = repmat(eye(2),[1 1 size(mr.t,1)]);        % identity matrix
+    m.p = p(:,:,k); m.t = r(mr.t); m.pb = pb;
+    [Kt,Mt] = assemble2(m,I); 
     K = K + Kt;  M = M + Mt; 
 end;
 % remove all zero rows and columns
@@ -29,8 +30,8 @@ S = sum(abs(K)); I = find(abs(S)>eps); K = K(I,I); M = M(I,I);
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord); 
 
 figure(1); plot(lam,'*');
-[pI,tI,pbI] = trimesh(p(I,:,1));
-figure(2), clf; plotf(pI,tI,pbI,normed(V(:,2)),0); colorbar
+mI = trimesh(p(I,:,1));
+figure(2), clf; plotf(mI,normed(V(:,2)),0); colorbar
 
 %% coherent partition
 nc = 3;                                             % number of clusters

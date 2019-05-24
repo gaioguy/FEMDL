@@ -1,16 +1,16 @@
-function fx = eval_P2(p,t,f_P2,x)
+function fx = eval_P2(mesh,f_P2,x)
 
 %% eval_P2 evaluate P2 Lagrange functions
 %
 % EVAL_P2(t,p,pb,v,mesh) plots the scalar function given by 
-%   p: (n x 2), one node per row
-%   t: (m x 3), integers, each row defines a triangle by indexing into p
+%   mesh: triangle mesh as produced by trimesh
 %   f_P2: (n x k), values of k functions on the P2 dofs
 %   x: (l x 2) l points in which the functions will be evaluated
 %   fx: (l x k) values of f_P2 at x
 %
 % (C) 2018 by O. Junge, see COPYRIGHT 
 
+p = mesh.p; t = mesh.t;
 elem2dof = dofP2(t);
 tr = triangulation(t,p);
 id = pointLocation(tr,x); 

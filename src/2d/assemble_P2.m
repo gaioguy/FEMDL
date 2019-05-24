@@ -1,4 +1,4 @@
-function [D,M] = assemble_P2(node,t,pb,G)
+function [D,M] = assemble_P2(m,G)
 
 %% ASSEMBLE_P2 stiffness and mass matrices for P2 Lagrange elements
 %
@@ -11,6 +11,8 @@ function [D,M] = assemble_P2(node,t,pb,G)
 % based on code from ifem by Long Chen
 %
 % (C) 2018 by O. Junge, see COPYRIGHT 
+
+node = m.p; t = m.t; pb = m.pb;
 
 [elem2dof,edge,bdDof] = dofP2(t);
 

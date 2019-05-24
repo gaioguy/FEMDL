@@ -17,9 +17,9 @@ pm = 1;  % pm = 0.2                             % uncomplete data case: percenta
 K = sparse(n,n); M = sparse(n,n);
 for k = 1:nt
     r = randperm(n,floor(pm*n))';               % draw random sample of nodes in p{k}
-    [pr,tr,pbr] = delaunay_C2(p(r,:,k),20);
-    I = repmat(eye(2),[1 1 size(tr,1)]);        % id tensor
-    [Kr,Mr] = assemble2(pr,tr,pbr,I);           % assembly of stiffness and mass
+    mr = delaunay_C2(p(r,:,k),20);
+    I = repmat(eye(2),[1 1 size(mr.t,1)]);        % id tensor
+    [Kr,Mr] = assemble2(mr,I);           % assembly of stiffness and mass
     [Ir,Jr,Sr] = find(Kr);  K = K + sparse(r(Ir),r(Jr),Sr,n,n);
     [Ir,Jr,Sr] = find(Mr);  M = M + sparse(r(Ir),r(Jr),Sr,n,n);
 end; 
@@ -31,12 +31,12 @@ S = sum(abs(K)); I = find(abs(S)>eps); K = K(I,I); M = M(I,I);
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord); 
 
 figure(1); plot(lam,'*'); 
-[pI,tI,pbI] = trimesh(p(I,:,1));
-figure(2); plotf(pI,tI,pbI,normed(V(:,2)),0); colorbar
+mI = trimesh(p(I,:,1));
+figure(2); plotf(mI,normed(V(:,2)),0); colorbar
 
 %% coherent partition
 nc = 8;                                         % number of clusters
-W = kmeans(V(pbI(:,2),1:nc),nc,'Replicates',20); % kmeans clustering
+W = kmeans(V(mI.pb(:,2),1:nc),nc,'Replicates',20); % kmeans clustering
 figure(3); clf; scatter(p(:,1,1),p(:,2,1),20,W,'filled');
 axis equal; axis tight; colormap(jet(nc));
 

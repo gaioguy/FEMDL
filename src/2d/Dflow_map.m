@@ -15,7 +15,7 @@ function DT = Dflow_map(v,x,tspan,tol)
 
 
 xi = x(:,1); yi = x(:,2);
-rho.x = 1e-4; rho.y = rho.x;
+rho.x = 1e-8; rho.y = rho.x;
 
 q = numel(tspan);
 m = numel(xi);

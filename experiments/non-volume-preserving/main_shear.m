@@ -1,4 +1,4 @@
-addpath('../../src','../../src/2d'); clear all
+addpath('../../src/2d'); init
 
 %% flow map T1
 t0 = 0; tf = 1; nt = 2;  
@@ -14,12 +14,14 @@ h = @(x) 1/8*(sin(pi*x(:,1))+2);
 nx = 60;  ny = nx/4;  n = (nx-1)*ny; dx = 4/(nx-1); 
 [xi,yi] = meshgrid(linspace(0,4-dx,nx-1),linspace(0,1,ny));
 p0(:,:,1) = [xi(:) yi(:)];  
-[p(:,:,1),t{1},pb{1}] = delaunay_C2(p0(:,:,1),4); 
+m{1} = delaunay_C2(p0(:,:,1),4); 
+p(:,:,1) = m{1}.p; t{1} = m{1}.t; pb{1} = m{1}.pb;
 
 %% time integration and mesh construction
 tic; for k = 1:nt-1, 
     p0(:,:,k+1) = T(p0(:,:,k)); 
-    [p(:,:,k+1),t{k+1},pb{k+1}] = delaunay_C2(p0(:,:,k+1),4);
+    m{k+1} = delaunay_C2(p0(:,:,k+1),4);
+    p(:,:,k+1) = m{k+1}.p; t{k+1} = m{k+1}.t; pb{k+1} = m{k+1}.pb;
 end; toc
 
 %% assembly

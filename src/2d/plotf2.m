@@ -3,7 +3,7 @@ function plotf2(mesh, F, varargin)
 %% PLOTF2 plot scalar functions on 2d triangulation
 %
 % PLOTF2(mesh,F) plots the scalar functions given by 
-%   mesh:   mesh data structure:
+%   mesh:   mesh data structure
 %   F: (n x k), values of the functions on the nodes
 %   edges: logical, determines whether triangulation is plotted as well
 %
@@ -44,5 +44,6 @@ for k = 1:m
     end
     view(2), axis equal, axis tight
     mf = max(abs(f)); caxis([-mf mf]);
+    colorbar
     drawnow
 end
