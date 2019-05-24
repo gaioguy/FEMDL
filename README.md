@@ -27,7 +27,7 @@ colormap(jet(nc));
 ```
 ![eigenvector](https://github.com/gaioguy/FEMDL/blob/master/experiments/double_gyre/figures/dg1.png)
 ![clustering](https://github.com/gaioguy/FEMDL/blob/master/experiments/double_gyre/figures/dg2.png)
-![advected clustering](https://github.com/gaioguy/FEMDL/blob/master/experiments/double_gyre/figures/dg2.png)
+![advected clustering](https://github.com/gaioguy/FEMDL/blob/master/experiments/double_gyre/figures/dg3.png)
 
 There are more demo computations provided in experiments/ which should be
 executed after changing into the corresponding folder.
