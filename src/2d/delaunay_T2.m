@@ -1,57 +1,40 @@
 function mesh = delaunay_T2(p0, dx, dy)
 
-%% DELAUNAY_T2 construct Delaunay triangulation on 2-torus
+%% DELAUNAY_T2 construct Delaunay triangulation on 2d torus
 %
-% mesh = delaunay_T2(p0, dx) constructs a Delaunay mesh on the 2d flat
-%   torus (i.e. periodic in x- and y-direction)
+% mesh = delaunay_T2(p0, dx, dy) constructs a Delaunay mesh on the 2d flat
+%   torus [0,dx] x [0,dy] (i.e. periodic in x- and y-direction)
 %   p0: (n x 2), nodes of the triangulation, one node per row
-%   dx,dy: size of the domain in x- and y-direction
+%   dx, dy: size of the domain in x- and y-direction
 %   mesh: triangle mesh as produced by trimesh
 %
 % (C) 2019 by O. Junge, see COPYRIGHT 
 
-n = size(p0,1);
+n = size(p0,1);            
+p1 = [p0;           p0+[dx 0];   p0+[0 dy]; ...
+      p0+[dx dy];   p0+[-dx dy]; p0+[-dx 0]; ...
+      p0+[-dx -dy]; p0+[0 -dy];  p0+[dx -dy]];    % copy vertices
+pb1 = repmat(1:n,1,9);              % map from extended nodes to original ones
 
-%% copy vertices around
-dp = [dx 0; dx dy; 0 dy; -dx dy; -dx 0; -dx -dy; 0 -dy; dx -dy];
-P = [p0; p0+dp(1,:); p0+dp(2,:); p0+dp(3,:); p0+dp(4,:); p0+dp(5,:); p0+dp(6,:); p0+dp(7,:); p0+dp(8,:);];
-% clf; scatter(P(:,1),P(:,2),10,'b','filled'); hold on
-PB = repmat(1:n,1,9);
-
-%% construct triangulation and sort points
-aS = alphaShape(P(:,1),P(:,2),1);
-t = alphaTriangulation(aS);
-% triplot(t,P(:,1),P(:,2),'b','linewidth',1); hold on; axis tight
-
-%% extract triangles with at least one vertex in original domain
-in = 1:n;           % vertices in original domain
-% scatter(P(in,1),P(in,2),3,'r','filled'); 
-tr = triangulation(t,P);
-ti = vertexAttachments(tr,in');   % indices of triangles adjacent to each vertex in original domain
-adj = [];
-for i = 1:length(in), adj = [adj ti{i}]; end
-adj = unique(adj);
-t1 = t(adj,:);
-% triplot(t1,P(:,1),P(:,2),'g');
-
-%% remove duplicate triangles
-flags = sum(t1 > 4*n,2) == 0;  % test if some vertex of a triangle is outside
-t2 = t1(find(flags),:);
-% triplot(t2,P(:,1),P(:,2),'m');
-
-%% extract required points and corresponding triangles
-all = unique(t2(:)); 
-mesh.p = P(all,:);
-Kt(all) = 1:length(all); Kt = Kt(:);        % mapping from old vertex numbers to 1:no_of_vertices_in_p1
-mesh.t = [Kt(t2(:,1)) Kt(t2(:,2)) Kt(t2(:,3))];
-% triplot(t3,P1(:,1),P1(:,2),'k'); hold on
-
-%% compute boundary mapping
-out = setdiff(all,in)'; 
-in = setdiff(all,out)';
-mesh.pb = ([1:length(all); in PB(out)])';
-% scatter(P(out,1),P(out,2),10,'r','filled');  axis tight
-
+Dt = delaunayTriangulation(p1);     % construct triangulation on extended nodes
+t1 = Dt.ConnectivityList;    
+f1 = sum(t1 > 4*n,2) == 0;          % triangles with no vertex in left or lower copies
+f2 = sum(t1 <= n,2) > 0;            % triangles with at least one vertex in original domain
+I = find(f1 & f2);                  % triangles with both properties
+d = 1e-15;
+crns = [d d; dx-d d; d dy-d; dx-d dy-d];
+crnsI = pointLocation(Dt,crns);
+I = [I;crnsI];
+t2 = t1(I,:);                       % remove all triangles not in I from triangulation
+J = unique(t2);                     % node numbers appearing in t1
+Jinv(J) = find(J);                  % inverse of J as a map on node numbers
+mesh.p = p1(J,:);                   % corresponding nodes
+mesh.t = Jinv(t2);
+mesh.pb = [1:length(J); pb1(J)]';   % and corresponding map for the boundary nodes
 mesh.b = [];
 
+% scatter(p1(:,1),p1(:,2),10,'filled','b'); hold on
+% triplot(t1,p1(:,1),p1(:,2),'b');
+% scatter(mesh.p(:,1),mesh.p(:,2),10,'filled','r'); 
+% triplot(mesh.t,mesh.p(:,1),mesh.p(:,2),'r'); hold off
 
