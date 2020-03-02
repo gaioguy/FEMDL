@@ -14,6 +14,9 @@ function [K,M] = assemble2(mesh,G)
 p = mesh.p; t = mesh.t; pb = mesh.pb;
 np = max(pb(:,2)); nt = size(t,1);
 [dphi,area] = gradbasis(p,t);
+if size(G)==[2,2]
+    G = repmat(G, [1,1,size(mesh.t,1)]);
+end
 PG = permute(G,[3 1 2]);
 K = sparse(np,np); M = sparse(np,np);
 for i = 1:3
