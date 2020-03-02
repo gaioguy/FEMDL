@@ -18,7 +18,7 @@ A = triquad(m,DLx,2);                               % integrate DL on triangles
 [K,M] = assemble2(m,A);                             % assemble stiffness and mass matrix
 [V,L] = eigs(K,M,6,'SM');                           % solve eigenproblem
 [lam,ord] = sort(diag(L),'descend'); V = V(:,ord);  % sort eigenvalues
-figure; plotf2(m,normed(V(:,2)),0); colorbar;       % plot eigenvector
+figure; plotf2(m,normed(V(:,3))); colorbar;         % plot eigenvector
 W = kmeans(V(:,1:3),3,'Replicates',20);             % kmeans clustering
 figure; scatter(p(:,1),p(:,2),30,W,'filled');       % plot clustering
 Tp = T(p);                                          % advect grid
