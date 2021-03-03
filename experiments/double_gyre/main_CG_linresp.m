@@ -21,8 +21,9 @@ m0 = trimesh(p); m0.b = [];
 
 %% compute second eigenvector u0
 deg = 5;
-[V0,lam0,K,M] = solve_CG(m0,@(x) dLx(tf,x),deg);
-u0 = V0(:,2); u0 = u0/sqrt(u0'*M*u0);                   % L2 normalization
+[V0,lam0,K,M] = solve_CG(m0,@(x) dLx(tf,x),deg); 
+lam0(2)
+u0 = V0(:,2); 
 figure(1); clf; plotf2(m0,u0);  colorbar
 
 %% compute udot via finite differencing
@@ -31,47 +32,60 @@ e = 1e-4;
 lamdot_fd = (lame(2)-lam0(2))/e
 ue = Ve(:,2);
 ue = ue/(ue'*M*u0);             % determine scaling of u_e such that in V_0
-udot_fd = (ue-u0)/e;
-figure(2); plotf2(m0,udot_fd); colorbar; 
+udot0_fd = (ue-u0)/e;
+figure(2); plotf2(m0,udot0_fd); colorbar; 
 
-%% compute udot by CG approach
+%% compute udot0 by CG approach
 Aq = triquad(m0,@(x) dLpx(tf,x),deg); 
-L = assemble2(m0,Aq);  
-lamdot = (u0'*L*u0)/(u0'*M*u0)
-udot1 = [(K-lam0(2)*M) u0; u0' 0]\[((lamdot*M-L)*u0)+u0; 0]; 
-udot = udot1(1:end-1);
-figure(3); plotf2(m0,udot); colorbar; 
+L = assemble2(m0,Aq);        
+tmp = [(K-lam0(2)*M) -M*u0; (M*u0)' 0]\[-L*u0; 0]; 
+udot0 = tmp(1:end-1); 
+lamdot0 = tmp(end) 
+figure(4); clf; plotf2(m0,udot0); colorbar;
 
-%% error of FD approximation of linear response
+%% error of FD approximation 
 Id = @(x) eye(2);
 [~,~,KId] = solve_CG(m0, Id, deg); 
-H1_error = sqrt((udot_fd-udot)'*(M-KId)*(udot_fd-udot))
-eig_error = abs(lamdot_fd-lamdot)
+L2_error = sqrt((udot0_fd-udot0)'*M*(udot0_fd-udot0))
+H1_error = sqrt((udot0_fd-udot0)'*(M-KId)*(udot0_fd-udot0))
+eig_error = abs(lamdot_fd-lamdot0)
 
 %% prediction of u_eps by linear response
 dt = 0.2; 
-u0lr = u0 + dt*udot;
+u0lr = u0 + dt*udot0;
+u0lr = u0lr/sqrt(u0lr'*M*u0lr);
 figure(4); clf; plotf2(m0,u0lr); colorbar; 
 
 %% exact u_eps
-Ve = solve_CG(m0, @(x) dLx(tf+dt,x), deg);
+[Ve, lame] = solve_CG(m0, @(x) dLx(tf+dt,x), deg); 
+lame(2)
 ue = Ve(:,2);
-figure(5); clf; plotf2(m0,ue); colorbar; 
+ue = ue/sqrt(ue'*M*ue);
+figure(5); clf; plotf2(m0,ue); colorbar;
+L2_error = sqrt((u0lr-ue)'*M*(u0lr-ue))
+eigerror = abs(lame(2)-(lam0(2)+dt*lamdot0))/abs(lam0(2))
+
+%% determine level set of optimal dynamic isoperimetric ratio
+T1 = @(x) T(tf+dt,x);
+m1 = trimesh(T1(p));
+[c,minipr,minc,iprs] = curve_of_optimal_ipr(m0,T1,u0,0,max(u0));
 
 %% velocity field for level set evolution 
 x = unique(p(:,1)); y = unique(p(:,2));
 [X,Y] = meshgrid(x,y);
 U0 = reshape(u0,nx,ny);
-U0P = reshape(udot,nx,ny);
+Ue = reshape(ue,nx,ny);
+U0P = reshape(udot0,nx,ny);
 [gx,gy] = gradient(U0,1/nx,1/ny);
 I = 1:6:nx;
 normg = sqrt(gx(I,I).^2+gy(I,I).^2);
 figure(6); clf
 quiver(X(I,I),Y(I,I),-gx(I,I).*U0P(I,I)./normg,-gy(I,I).*U0P(I,I)./normg);
 axis equal; axis tight; xlabel('$x$'); ylabel('$y$');
-level = 0.5;
-hold on; contour(X,Y,U0,level*[1 1],'k','linewidth',1);
-contour(X,Y,U0+dt*U0P,level*[1 1],'k--','linewidth',1);
+c = minc;
+hold on; contour(X,Y,U0,c*[1 1],'k','linewidth',2);
+contour(X,Y,U0+dt*U0P,c*[1 1],'g','linewidth',2);
+contour(X,Y,Ue,c*[1 1],'r--','linewidth',2);
 
 %% prediction of u_eps by Taylor approximation of the flow
 dtvf = @(t,x) df_fd(@(t) vf(t,x), t, 1)';
