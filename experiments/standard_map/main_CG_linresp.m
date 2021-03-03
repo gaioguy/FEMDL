@@ -18,7 +18,7 @@ nx = 100; ny = nx;
 dom = [0 0; 2*pi 2*pi]; dx = diff(dom);
 p0 = grid2(nx,ny)*diag(dx*(nx-2)/(nx-1)) + dom(1,:);
 mesh0 = delaunay_T2(p0, dx(1), dx(2));
-deg = 5;                   % degree of Gauss quadrature for space integrals
+deg = 2;                   % degree of Gauss quadrature for space integrals
 k = 2;                     % number of eigenfunction to consider
 
 %% compute u0
