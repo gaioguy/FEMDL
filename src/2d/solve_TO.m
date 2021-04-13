@@ -18,7 +18,7 @@ if ~isempty(b)
 end
 
 % compute eigenvectors
-[V,lambda] = eigs(K+1e-8*speye(size(K)),M,20,'SM'); 
+[V,lambda] = eigs(K,M,20,'SM'); 
 [lambda,ord] = sort(diag(lambda),'descend'); 
 V = V(:,ord);
 

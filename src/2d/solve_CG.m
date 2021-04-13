@@ -10,10 +10,13 @@ if ~isempty(b)                      % apply Dirichlet boundary condition
 end
 
 nev = 20;                           % compute eigenvectors
-[V,lam] = eigs(K+1e-4*speye(size(K)),M,nev,'SM'); 
+[V,lam] = eigs(K,M,nev,'SM'); 
 [lam,ord] = sort(diag(lam),'descend'); 
 V = V(:,ord);
 
 for i = 1:nev                       % fix sign 
     V(:,i) = V(:,i)*sign(sum(V(:,i)));
+    V(:,i) = V(:,i)/sqrt(V(:,i)'*M*V(:,i));  % L2-normalization
 end
+
+
