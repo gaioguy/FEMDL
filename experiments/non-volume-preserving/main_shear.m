@@ -1,4 +1,4 @@
-addpath('../../src/2d'); init
+addpath('../../src/2d'); clear all; init
 
 %% flow map T1
 t0 = 0; tf = 1; nt = 2;  
@@ -48,8 +48,8 @@ axis equal, axis([0 4 0 1]), box on
 
 %% image density
 figure(2); clf; colormap summer; cmap = colormap; cmap = cmap(end:-1:1,:); colormap(cmap);
-subplot(211); plotf(p(:,:,1),t{1},pb{1},a./lt{1},0); box on
-subplot(212); plotf(p(:,:,2),t{2},pb{2},a./lt{2},0); box on
+subplot(211); plotf(m{1},a./lt{1},0); box on
+subplot(212); plotf(m{2},a./lt{2},0); box on
 
 
 
