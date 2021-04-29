@@ -9,18 +9,18 @@ DLx = @(x) fapply1(DL, D(T,x));             % evaluate DL at each row of x
 
 %% triangulation: square
 nx = 20; ny = nx;                           % number of grid points
-[p,t,pb,b] = trimesh(grid2(nx,ny));         % triangular mesh
+mesh = trimesh(grid2(nx,ny));         % triangular mesh
 
 %% assembly 
 deg = 1;                                    % degree of quadrature
-A = triquad(p,t,DLx,deg);                   % integrate DL on triangles
-[K,M] = assemble2(p,t,pb,A);                % assemble stiffness and mass matrices
+A = triquad(mesh,DLx,deg);                   % integrate DL on triangles
+[K,M] = assemble2(mesh,A);                % assemble stiffness and mass matrices
 
 %% solve eigenproblem
 [V,L] = eigs(K,M,10,'SM');
 [lam,order] = sort(diag(L),'descend'); V = V(:,order);
 
 figure(1); plot(lam,'*'); 
-figure(2); plotf(p,t,pb,V(:,2),0);  colorbar
+figure(2); plotf(mesh,V(:,2),0);  colorbar
 
 

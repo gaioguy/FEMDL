@@ -21,6 +21,7 @@ I = find(f1 & f2);                  % triangles with both properties
 t2 = t1(I,:);                       % remove all triangles not in I from triangulation
 J = unique(t2);                     % node numbers appearing in t1
 Jinv(J) = find(J);                  % inverse of J as a map on node numbers
+
 mesh.p = p1(J,:);                        % corresponding nodes
 mesh.t = Jinv(t2);
 mesh.pb = [1:length(J); pb1(J)]';        % and corresponding map for the boundary nodes

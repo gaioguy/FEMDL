@@ -1,4 +1,4 @@
-addpath('../../src/2d'); init
+addpath('../../src/2d'); clear all; init
 
 %% flow map 
 t0 = 0; tf = 1; 
@@ -9,7 +9,7 @@ T1 = @(x) at_tf(flowmap(v,x,[tf t0]));
 %% triangulation
 nx = 25; ny = nx; n = nx*ny; 
 m.p = grid2(nx,ny); m.pb = [1:n; 1:n]'; m.b = []; 
-tri = delaunayTriangulation(p);
+tri = delaunayTriangulation(m.p);
 m.t = tri.ConnectivityList; 
 
 %% transfer operator approximation
@@ -26,16 +26,16 @@ DL = 0.5*(K + Alpha'*K*Alpha);
 [lam,order] = sort(diag(L),'descend'); lam; V = V(:,order);
 
 figure(1); plot(lam,'*'); axis tight, axis square
-figure(2); plotf(p,t,pb,normed(V(:,2)),1); colorbar; 
+figure(2); plotf(m,normed(V(:,2)),1); colorbar; 
 
 %% coherent partition
 nc = 3;                                         % number of clusters
 W = kmeans(V(:,1:nc),nc,'Replicates',20);       % kmeans clustering
-figure(3); clf; scatter(p(:,1),p(:,2),30,W,'filled');
+figure(3); clf; scatter(m.p(:,1),m.p(:,2),30,W,'filled');
 axis equal; axis tight; colormap(jet(nc));
 
 %% advected partition
-Tp = T(p);                                      % advect grid
+Tp = T(m.p);                                      % advect grid
 figure(4); clf; scatter(Tp(:,1),Tp(:,2),30,W,'filled'); 
 axis equal; colormap(jet(nc));
 
