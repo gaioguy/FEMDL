@@ -27,8 +27,8 @@ end;
 S = sum(abs(K)); I = find(abs(S)>eps); K = K(I,I); M = M(I,I); 
 
 %% eigenproblem
-[V,L] = eigs(K,M,15,'SM'); 
-[lam,ord] = sort(diag(L),'descend'); V = V(:,ord); 
+[V,L] = eigs(K,M,10,'SM'); 
+[lam,ord] = sort(real(diag(L)),'descend'); V = real(V(:,ord)); 
 
 figure(1); plot(lam,'*'); 
 mI = trimesh(p(I,:,1));
