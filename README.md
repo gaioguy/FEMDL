@@ -32,6 +32,8 @@ colormap(jet(nc));
 There are more demo computations provided in experiments/ which should be
 executed after changing into the corresponding folder.
 
+Compatibility with [Octave](https://octave.org) is currently untested.
+
 ## Reference
 Froyland, G.; Junge, O.: Robust FEM-based extraction of finite-time coherent sets using scattered, sparse, and incomplete trajectories, SIAM J. Appl. Dyn. Syst. 17 (2), p. 1891-1924, 2018. https://arxiv.org/abs/1705.03640
 
